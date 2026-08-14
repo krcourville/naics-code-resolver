@@ -4,6 +4,7 @@ import { flattenHierarchy, type HierarchyTree } from "./hierarchy.ts";
 export interface LoadedNaics {
   model: BeaconModel;
   titles: Map<string, string>;
+  hierarchy: HierarchyTree;
 }
 
 let loadPromise: Promise<LoadedNaics> | undefined;
@@ -25,7 +26,7 @@ export function loadNaics(): Promise<LoadedNaics> {
       fetchJson<BeaconParams>("/naics-model.json"),
       fetchJson<HierarchyTree>("/naics-hierarchy.json"),
     ]);
-    return { model: new BeaconModel(params), titles: flattenHierarchy(hierarchy) };
+    return { model: new BeaconModel(params), titles: flattenHierarchy(hierarchy), hierarchy };
   })();
   return loadPromise;
 }

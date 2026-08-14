@@ -28,9 +28,10 @@ describe("loadNaics", () => {
 
   test("resolves model + flattened hierarchy titles", async () => {
     const { loadNaics } = await import("./loader.ts");
-    const { model, titles } = await loadNaics();
-    expect(model.predictTopN("corn farm").length).toBeGreaterThan(0);
-    expect(titles.get("11")).toBe("Agriculture");
+    const loaded = await loadNaics();
+    expect(loaded.model.predictTopN("corn farm").length).toBeGreaterThan(0);
+    expect(loaded.titles.get("11")).toBe("Agriculture");
+    expect(loaded.hierarchy).toEqual(hierarchy);
   });
 
   test("concurrent callers share one in-flight fetch (V5: never dropped/refetched)", async () => {

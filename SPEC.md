@@ -26,7 +26,7 @@ R1|2022 NAICS Structure xlsx = flat depth-first outline, cols Change Indicator\|
 
 ## §I INTERFACES
 
-- ui: single page. text input → submit → result (code + confidence) | clarifying-question flow → result.
+- ui: single page. text input → submit → result (code + confidence, per §C band) shown always; medium/low band → Q&A offered to refine shown result → updated result.
 - file: `public/naics-model.json` — fitted BeaconModel artifact, sparse format: `sector_naics: {sector:[naicsCode,...]}` (replaces dense `naics_indices`), `dict_ncombs_props`/`dict_ems_props`: `{sector:{ngram:{naicsCode:proportion}}}` (nonzero only), weights unchanged (`{sector:{ngram:weight}}`).
 - file: `public/naics-hierarchy.json` — code→description tree.
 - script: `scripts/build-model.*` — fits BeaconModel via BEACON submodule, exports params → `naics-model.json`. manual invoke, ⊥ CI.
@@ -35,12 +35,13 @@ R1|2022 NAICS Structure xlsx = flat depth-first outline, cols Change Indicator\|
 ## §V INVARIANTS
 
 V1: ∀ inference → runs client-side, ⊥ network call to backend/API.
-V2: confidence <.70 | top-2 scores within .10 → clarifying Q&A offered before final code shown.
+V2: confidence <.70 | top-2 scores within .10 → clarifying Q&A offered. result (code+confidence) ! render first, regardless of band — Q&A refines it, ⊥ hides/replaces it pre-answer.
 V3: final displayed code ! valid 6-digit NAICS code.
 V4: model/hierarchy load ! block text input.
 V5: submit before load done → await load, then infer — ⊥ error/drop request.
 V6: TS-ported inference ! match Python BeaconModel output (top-N codes + scores, within tolerance) for oracle test set.
 V7: `naics-model.json` gzip size ! exceed 10MB (static-hosting budget).
+V8: result display ! show confidence numeric[0,1] & text label (high|medium|low) together.
 
 ## §T TASKS
 
@@ -53,7 +54,7 @@ T5|x|verify TS port parity vs Python BeaconModel — same inputs → same top-N 
 T6|x|build async model+hierarchy loader, non-blocking|V4,V5
 T7|x|impl confidence banding + text label + top-2 margin check|V2
 T8|x|impl NAICS hierarchy drill-down clarifying-question UI|V2
-T9|.|impl main page: input → submit → result/Q&A flow|I.ui
+T9|x|impl main page: input → submit → result/Q&A flow|I.ui
 T10|.|curate business-description test-case list|-
 T11|.|Playwright test suite over test-case list, tune confidence bands|T10,V2
 T12|x|rework naics-model.json export to sparse format (drop dense naics_indices arrays)|T2,B2,V7
