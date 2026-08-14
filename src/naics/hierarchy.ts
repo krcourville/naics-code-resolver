@@ -1,6 +1,8 @@
 export interface HierarchyNode {
   code: string;
   title: string;
+  definition?: string;
+  examples?: string[];
   children: Record<string, HierarchyNode>;
 }
 

@@ -23,12 +23,13 @@ static page: free-text business description → client-side ONNX inference → 6
 
 id|fact|source
 R1|2022 NAICS Structure xlsx = flat depth-first outline, cols Change Indicator\|2022 NAICS Code\|2022 NAICS Title. levels by code digit-len: 2=sector,3=subsector,4=industry group,5=NAICS industry,6=national industry. 3 merged-sector range codes (31-33,44-45,48-49) match BeaconModel's `__get_sector()` merge exactly. title has trailing "T" (trilateral-agreement marker) appended directly, no separator — strip when preceded by lowercase. 1012 six-digit codes for 2022 vintage, matches `beacon/create_example_data_output.txt` reported count.|https://www.census.gov/naics/2022NAICS/2022_NAICS_Structure.xlsx
+R2|2022 NAICS Descriptions xlsx confirmed (T15): cols Code\|Title\|Description, 2125 rows, entries at every hierarchy level not just 6-digit (sectors down to national industries). one Description cell per code jams definition + "Illustrative Examples:" list + "Cross-References." into free text, no separate columns — split on those literal markers. 5-digit codes that alias a single 6-digit industry are stubs ("See industry description for XXXXXX.", 522 of 2125 rows) with no real content, skip them. 1603/2125 codes carry a real definition.|https://www.census.gov/naics/2022NAICS/2022_NAICS_Descriptions.xlsx
 
 ## §I INTERFACES
 
-- ui: single page. text input → submit → result (code + confidence, per §C band) shown always; medium/low band → Q&A offered to refine shown result → updated result.
+- ui: single page. text input → submit → result (code + confidence, per §C band) shown always; medium/low band → Q&A offered to refine shown result → updated result. result panel & Q&A candidate picks show definition + illustrative examples when present for that code (§V10).
 - file: `public/naics-model.json` — fitted BeaconModel artifact, sparse format: `sector_naics: {sector:[naicsCode,...]}` (replaces dense `naics_indices`), `dict_ncombs_props`/`dict_ems_props`: `{sector:{ngram:{naicsCode:proportion}}}` (nonzero only), weights unchanged (`{sector:{ngram:weight}}`).
-- file: `public/naics-hierarchy.json` — code→description tree.
+- file: `public/naics-hierarchy.json` — code→node tree, node = `{title, definition?, examples?[], children}`. `definition`/`examples` optional — only codes with a Census descriptions-file entry carry them (§R2).
 - script: `scripts/build-model.*` — fits BeaconModel via BEACON submodule, exports params → `naics-model.json`. manual invoke, ⊥ CI.
 - submodule: `beacon` — BEACON census repo (sklearn pipeline + training data + possible NAICS structure data).
 
@@ -43,6 +44,7 @@ V6: TS-ported inference ! match Python BeaconModel output (top-N codes + scores,
 V7: `naics-model.json` gzip size ! exceed 10MB (static-hosting budget).
 V8: result display ! show confidence numeric[0,1] & text label (high|medium|low) together.
 V9: Q&A offered (§V2) → first present model's own top-N candidates (title+code, score>0) as picks, ⊥ full hierarchy root browse. picking a candidate → resolved (§V3) if leaf, else hierarchy drill-down continues from that candidate's branch. no candidates match (user rejects) → fall back to full hierarchy root browse.
+V10: code missing definition/examples in hierarchy data → UI ! error/crash/blank — falls back to title-only display.
 
 ## §T TASKS
 
@@ -61,6 +63,8 @@ T11|x|Playwright test suite over test-case list, tune confidence bands|T10,V2
 T12|x|rework naics-model.json export to sparse format (drop dense naics_indices arrays)|T2,B2,V7
 T13|x|update TS BeaconModel port to read sparse naics-model.json format|T4,B2,T12
 T14|x|fix Q&A entry point: seed picks from model top-N candidates instead of hierarchy root|T8,T9,V9
+T15|x|source/fetch Census 2022 NAICS Descriptions (definition + illustrative examples), verify §R2, merge into naics-hierarchy.json|R2
+T16|.|surface definition + examples in result panel & Q&A candidate picks, graceful fallback when absent|T15,T9,T14,V10
 
 ## §B BUGS
 

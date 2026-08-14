@@ -36,3 +36,7 @@ dist-ssr
 /playwright-report/
 /blob-report/
 /playwright/.cache/
+
+# scripts/build-hierarchy.py downloads, scripts/*.py bytecode cache
+scripts/.naics_*.xlsx
+scripts/__pycache__/
