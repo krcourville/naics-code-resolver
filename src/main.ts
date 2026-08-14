@@ -1,7 +1,13 @@
 import "./style.css";
 import { loadNaics } from "./naics/loader.ts";
 import { classifyConfidence } from "./naics/confidence.ts";
-import { drilldownOptions, getNode, isResolved } from "./naics/drilldown.ts";
+import {
+  drilldownOptions,
+  getAncestorPath,
+  getNode,
+  isResolved,
+  type DrillOption,
+} from "./naics/drilldown.ts";
 import type { HierarchyTree } from "./naics/hierarchy.ts";
 import type { NaicsScore } from "./naics/beacon-model.ts";
 
@@ -18,14 +24,17 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
     </a>
     <a href="https://github.com/krcourville/naics-code-resolver" target="_blank" rel="noopener">
       <svg height="28" width="28" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8Z"></path></svg>
-      naics-code-resolver
+      naics-code-resolver (MIT)
     </a>
   </div>
 </header>
 <section id="resolver">
   <p>What does your business do? Type it below — we'll figure out the code.</p>
   <form id="naics-form">
-    <input id="naics-input" type="search" placeholder="e.g. retail bakery" autocomplete="off" />
+    <div id="naics-input-wrap">
+      <textarea id="naics-input" rows="2" placeholder="e.g. retail bakery"></textarea>
+      <button id="naics-clear" type="button" aria-label="Clear" hidden>✕</button>
+    </div>
     <button id="naics-submit" type="submit">Find code</button>
   </form>
   <a id="how-it-works-link" href="https://github.com/krcourville/naics-code-resolver#how-does-it-work" target="_blank" rel="noopener">💡 How does it work?</a>
@@ -35,7 +44,8 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
 `;
 
 const form = document.querySelector<HTMLFormElement>("#naics-form")!;
-const input = document.querySelector<HTMLInputElement>("#naics-input")!;
+const input = document.querySelector<HTMLTextAreaElement>("#naics-input")!;
+const clearBtn = document.querySelector<HTMLButtonElement>("#naics-clear")!;
 const resultEl = document.querySelector<HTMLDivElement>("#naics-result")!;
 const qaEl = document.querySelector<HTMLDivElement>("#naics-qa")!;
 
@@ -43,12 +53,15 @@ const qaEl = document.querySelector<HTMLDivElement>("#naics-qa")!;
 // this same in-flight promise if it lands early (§V5, loader dedupes it).
 const loaded = loadNaics();
 
-// §V10: definition/examples optional — missing ones just don't render, never a blank/crash.
-function snippet(text: string, max = 160): string {
-  return text.length > max ? `${text.slice(0, max).trimEnd()}…` : text;
-}
-
 const CONFIDENCE_EMOJI: Record<string, string> = { high: "🟢", medium: "🟡", low: "🔴" };
+
+// Last submitted search's model candidates, kept so a picked/resolved result is never a
+// dead end — "Not this one?" reopens Q&A from the same candidates, whatever the path taken.
+let lastSearch: {
+  candidates: NaicsScore[];
+  hierarchy: HierarchyTree;
+  titles: Map<string, string>;
+} | null = null;
 
 function renderResult(
   code: string,
@@ -66,20 +79,49 @@ function renderResult(
     <p class="confidence">${CONFIDENCE_EMOJI[label] ?? ""} confidence: ${score.toFixed(2)} (${label})</p>
     ${node?.definition ? `<p class="definition">${node.definition}</p>` : ""}
     ${node?.examples?.length ? `<ul class="examples">${node.examples.map((e) => `<li>${e}</li>`).join("")}</ul>` : ""}
+    <button type="button" id="naics-try-again">🔄 See other matches</button>
   `;
+  resultEl.querySelector<HTMLButtonElement>("#naics-try-again")!.addEventListener("click", () => {
+    if (lastSearch) renderQA(lastSearch.candidates, lastSearch.hierarchy, lastSearch.titles);
+  });
 }
 
 // §C: clarifying Q&A = static hierarchy drill-down only, ⊥ model/LLM-generated questions.
+// `path` = breadcrumb from root to current level (empty = root/all sectors), directory-style
+// nav: breadcrumb segments jump back to any ancestor, "Up" pops one level (§V9 backprop: no way back).
 function renderHierarchyQA(
   hierarchy: HierarchyTree,
   titles: Map<string, string>,
-  code: string | null,
+  path: DrillOption[],
 ) {
+  const code = path.length ? path[path.length - 1].code : null;
   const options = drilldownOptions(hierarchy, code);
+  const crumbs = [
+    `<button type="button" class="crumb" data-idx="-1">🏠 All sectors</button>`,
+    ...path.map(
+      (p, i) => `<button type="button" class="crumb" data-idx="${i}">📁 ${p.title}</button>`,
+    ),
+  ].join(" › ");
   qaEl.innerHTML = `
-    <p>Narrow it down:</p>
-    <ul>${options.map((o) => `<li><button type="button" data-code="${o.code}">${o.title}</button></li>`).join("")}</ul>
+    <nav class="qa-breadcrumb">${crumbs}</nav>
+    ${path.length ? `<button type="button" id="naics-qa-up">⬆️ Up</button>` : ""}
+    <h2 class="qa-heading">Narrow it down:</h2>
+    <ul>${options
+      .map((o) => {
+        const icon = isResolved(hierarchy, o.code) ? "🏷️" : "📁";
+        return `<li><button type="button" data-code="${o.code}">${icon} ${o.title}</button></li>`;
+      })
+      .join("")}</ul>
   `;
+  qaEl.querySelector<HTMLButtonElement>("#naics-qa-up")?.addEventListener("click", () => {
+    renderHierarchyQA(hierarchy, titles, path.slice(0, -1));
+  });
+  for (const btn of qaEl.querySelectorAll<HTMLButtonElement>("button.crumb")) {
+    btn.addEventListener("click", () => {
+      const idx = Number(btn.dataset.idx);
+      renderHierarchyQA(hierarchy, titles, idx < 0 ? [] : path.slice(0, idx + 1));
+    });
+  }
   for (const btn of qaEl.querySelectorAll<HTMLButtonElement>("button[data-code]")) {
     btn.addEventListener("click", () => {
       const nextCode = btn.dataset.code!;
@@ -87,24 +129,33 @@ function renderHierarchyQA(
         renderResult(nextCode, hierarchy, titles, 1, "high"); // §V3: confirmed leaf is a valid 6-digit code
         qaEl.hidden = true;
       } else {
-        renderHierarchyQA(hierarchy, titles, nextCode);
+        const nextTitle = getNode(hierarchy, nextCode)!.title;
+        renderHierarchyQA(hierarchy, titles, [...path, { code: nextCode, title: nextTitle }]);
       }
     });
   }
 }
 
 // §V9: Q&A first offers the model's own top-N candidates, not the full hierarchy.
-// Candidate picks show a definition snippet (§V10: absent -> just the title) to help choose.
+// Candidate picks show code, confidence, and full definition (§V10: absent -> just title) to help choose.
 function renderQA(candidates: NaicsScore[], hierarchy: HierarchyTree, titles: Map<string, string>) {
   qaEl.hidden = false;
   qaEl.innerHTML = `
-    <p>Not quite right? Did you mean:</p>
+    <h2 class="qa-heading">Not quite right? Did you mean:</h2>
     <ul>${candidates
       .map((c) => {
         const node = getNode(hierarchy, c.naics);
         const title = node?.title ?? titles.get(c.naics) ?? c.naics;
-        const def = node?.definition ? `<p class="definition">${snippet(node.definition)}</p>` : "";
-        return `<li><button type="button" data-code="${c.naics}">${title}${def}</button></li>`;
+        const { label } = classifyConfidence(c.score, undefined);
+        const def = node?.definition ? `<p class="definition">${node.definition}</p>` : "";
+        return `<li><button type="button" data-code="${c.naics}">
+          <div class="qa-cand-head">
+            <span class="qa-cand-code">${c.naics}</span>
+            <span class="qa-cand-title">${title}</span>
+            <span class="qa-cand-conf">${CONFIDENCE_EMOJI[label] ?? ""} ${c.score.toFixed(2)}</span>
+          </div>
+          ${def}
+        </button></li>`;
       })
       .join("")}</ul>
     <button type="button" id="naics-qa-browse">None of these — browse full hierarchy</button>
@@ -123,12 +174,12 @@ function renderQA(candidates: NaicsScore[], hierarchy: HierarchyTree, titles: Ma
         );
         qaEl.hidden = true;
       } else {
-        renderHierarchyQA(hierarchy, titles, code);
+        renderHierarchyQA(hierarchy, titles, getAncestorPath(hierarchy, code));
       }
     });
   }
   qaEl.querySelector<HTMLButtonElement>("#naics-qa-browse")!.addEventListener("click", () => {
-    renderHierarchyQA(hierarchy, titles, null);
+    renderHierarchyQA(hierarchy, titles, []);
   });
 }
 
@@ -137,10 +188,12 @@ async function handleSubmit(text: string) {
   qaEl.hidden = true;
   const top = model.predictTopN(text, 5);
   if (top.length === 0) {
+    lastSearch = null;
     resultEl.hidden = false;
     resultEl.innerHTML = `<p>No match found. Try a different description.</p>`;
     return;
   }
+  lastSearch = { candidates: top, hierarchy, titles };
   const { label, offerQA } = classifyConfidence(top[0].score, top[1]?.score);
   renderResult(top[0].naics, hierarchy, titles, top[0].score, label); // §V2/§V8: result always shown first
   if (offerQA) renderQA(top, hierarchy, titles);
@@ -150,4 +203,27 @@ form.addEventListener("submit", (event) => {
   event.preventDefault();
   const text = input.value.trim();
   if (text) void handleSubmit(text);
+});
+
+// Enter submits (Shift+Enter for a newline), matching single-line input expectations.
+input.addEventListener("keydown", (event) => {
+  if (event.key === "Enter" && !event.shiftKey) {
+    event.preventDefault();
+    form.requestSubmit();
+  }
+});
+
+// Auto-grow with content so longer descriptions stay fully visible while typing.
+input.addEventListener("input", () => {
+  input.style.height = "auto";
+  input.style.height = `${input.scrollHeight}px`;
+  clearBtn.hidden = input.value.length === 0;
+});
+
+// textarea has no native type="search" clear-✕ — replicate it.
+clearBtn.addEventListener("click", () => {
+  input.value = "";
+  input.style.height = "auto";
+  clearBtn.hidden = true;
+  input.focus();
 });

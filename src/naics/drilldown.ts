@@ -33,3 +33,17 @@ export function isResolved(tree: HierarchyTree, code: string): boolean {
   const node = getNode(tree, code);
   return node !== undefined && Object.keys(node.children).length === 0;
 }
+
+/** Root-to-node chain of {code,title} for breadcrumb/up-navigation. Empty if code not found. */
+export function getAncestorPath(tree: HierarchyTree, code: string): DrillOption[] {
+  function walk(nodes: HierarchyTree, path: DrillOption[]): DrillOption[] | null {
+    for (const node of Object.values(nodes)) {
+      const next = [...path, { code: node.code, title: node.title }];
+      if (node.code === code) return next;
+      const found = walk(node.children, next);
+      if (found) return found;
+    }
+    return null;
+  }
+  return walk(tree, []) ?? [];
+}

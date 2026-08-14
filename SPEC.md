@@ -28,10 +28,11 @@ static page: free-text business description → client-side ONNX inference → 6
 id|fact|source
 R1|2022 NAICS Structure xlsx = flat depth-first outline, cols Change Indicator\|2022 NAICS Code\|2022 NAICS Title. levels by code digit-len: 2=sector,3=subsector,4=industry group,5=NAICS industry,6=national industry. 3 merged-sector range codes (31-33,44-45,48-49) match BeaconModel's `__get_sector()` merge exactly. title has trailing "T" (trilateral-agreement marker) appended directly, no separator — strip when preceded by lowercase. 1012 six-digit codes for 2022 vintage, matches `beacon/create_example_data_output.txt` reported count.|https://www.census.gov/naics/2022NAICS/2022_NAICS_Structure.xlsx
 R2|2022 NAICS Descriptions xlsx confirmed (T15): cols Code\|Title\|Description, 2125 rows, entries at every hierarchy level not just 6-digit (sectors down to national industries). one Description cell per code jams definition + "Illustrative Examples:" list + "Cross-References." into free text, no separate columns — split on those literal markers. 5-digit codes that alias a single 6-digit industry are stubs ("See industry description for XXXXXX.", 522 of 2125 rows) with no real content, skip them. 1603/2125 codes carry a real definition.|https://www.census.gov/naics/2022NAICS/2022_NAICS_Descriptions.xlsx
+R3|BEACON (submodule, source of ported logic) licensed CC0 1.0 Universal — public domain dedication, ⊥ attribution/copyleft req. US Census Bureau notes gov-employee code ⊥ subject to US copyright anyway. no conflict w/ this project's MIT license (T22,T36).|https://github.com/uscensusbureau/BEACON/blob/133ae64c177e863bf1149872720cad01b0699346/LICENSE.md
 
 ## §I INTERFACES
 
-- ui: single page. text input → submit → result (code + confidence, per §C band) shown always; medium/low band → Q&A offered to refine shown result → updated result. result panel & Q&A candidate picks show definition + illustrative examples when present for that code (§V10).
+- ui: single page. text input (auto-grow textarea, Enter submits/Shift+Enter newline, custom ✕ clear) → submit → result (code + confidence, per §C band) shown always; medium/low band → Q&A offered to refine shown result → updated result. result panel & Q&A candidate picks show definition + illustrative examples when present for that code (§V10).
 - file: `public/naics-model.json` — fitted BeaconModel artifact, sparse format: `sector_naics: {sector:[naicsCode,...]}` (replaces dense `naics_indices`), `dict_ncombs_props`/`dict_ems_props`: `{sector:{ngram:{naicsCode:proportion}}}` (nonzero only), weights unchanged (`{sector:{ngram:weight}}`).
 - file: `public/naics-hierarchy.json` — code→node tree, node = `{title, definition?, examples?[], children}`. `definition`/`examples` optional — only codes with a Census descriptions-file entry carry them (§R2).
 - script: `scripts/build-model.*` — fits BeaconModel via BEACON submodule, exports params → `naics-model.json`. manual invoke, ⊥ CI.
@@ -39,7 +40,7 @@ R2|2022 NAICS Descriptions xlsx confirmed (T15): cols Code\|Title\|Description, 
 - ui: page, below search form → "💡 How does it work?" link → README section on GitHub (external, ⊥ in-page anchor/diagram).
 - workflow: `.github/workflows/deploy.yml` — build + publish `dist/` to GitHub Pages on push to `main`.
 - deployed URL: https://krcourville.github.io/naics-code-resolver/
-- ui: page header bar (title, links row below: Cajun Code Monkey logo + "A Cajun Code Monkey project" → https://cajuncodemonkey.com/, GitHub octocat icon + repo name text "naics-code-resolver" → https://github.com/krcourville/naics-code-resolver)
+- ui: page header bar (title, links row below: Cajun Code Monkey logo + "A Cajun Code Monkey project" → https://cajuncodemonkey.com/, GitHub octocat icon + repo name text "naics-code-resolver (MIT)" → https://github.com/krcourville/naics-code-resolver)
 - file: `public/cajun-code-monkey.png` — Cajun Code Monkey symbol logo, tightly-cropped/transparent bg (favicon-source variant, ⊥ padded "PNG Logo Files" variant — that one has near-white non-transparent margin, visually undersized vs GitHub icon at matched box size), used in header link.
 
 ## §V INVARIANTS
@@ -52,7 +53,9 @@ V5: submit before load done → await load, then infer — ⊥ error/drop reques
 V6: TS-ported inference ! match Python BeaconModel output (top-N codes + scores, within tolerance) for oracle test set.
 V7: `naics-model.json` gzip size ! exceed 10MB (static-hosting budget).
 V8: result display ! show confidence numeric[0,1] & text label (high|medium|low) together, ? emoji indicator (🟢/🟡/🔴) per band.
-V9: Q&A offered (§V2) → first present model's own top-N candidates (title+code, score>0) as picks, ⊥ full hierarchy root browse. picking a candidate → resolved (§V3) if leaf, else hierarchy drill-down continues from that candidate's branch. no candidates match (user rejects) → fall back to full hierarchy root browse.
+V9: Q&A offered (§V2) → first present model's own top-N candidates (code+title+confidence w/ emoji+full definition, score>0) as picks, ⊥ full hierarchy root browse, ⊥ truncated/snippet text. picking a candidate → resolved (§V3) if leaf, else hierarchy drill-down continues from that candidate's branch. no candidates match (user rejects) → fall back to full hierarchy root browse.
+V12: hierarchy drill-down UI = directory-style nav: breadcrumb trail (root → current, each ancestor clickable) + "Up" control, ⊥ dead-end w/ no way back. options list ! show emoji icon per row (📁 branch, 🏷️ leaf/resolvable code).
+V13: any resolved result (candidate pick or hierarchy leaf) ! offer a way back — "See other matches" reopens Q&A from the original search's model candidates, ⊥ dead end regardless of path taken to reach the result.
 V10: code missing definition/examples in hierarchy data → UI ! error/crash/blank — falls back to title-only display.
 V11: `vp build` output (`dist/index.html` + asset refs) ! resolve correctly under `/naics-code-resolver/` base path — no root-relative asset breaks under GitHub Pages project-site subpath.
 
@@ -93,6 +96,15 @@ T31|x|global `a` styling: no underline, no default `:visited` purple, consistent
 T32|x|reword intro line, playful tone: "What does your business do? Type it below — we'll figure out the code."|I.ui
 T33|x|whitespace: widen gap header→intro text, tighten gap search form→"How does it work?" link|I.ui
 T34|x|add emoji indicator (🟢/🟡/🔴) to confidence display, banded on label|V8
+T35|x|hierarchy drill-down: directory-style breadcrumb + Up nav, emoji icons per row (📁/🏷️)|V12
+T36|x|append "(MIT)" to GitHub repo link text. verified BEACON (submodule source) = CC0 1.0 public domain, no attribution/copyleft req → no conflict w/ MIT relicense|I.ui
+T37|x|Q&A candidate cards: add code + confidence badge (emoji+score), drop 160-char definition truncation → full text|V9
+T38|x|swap single-line search input for auto-growing textarea (long descriptions were cramped/hard to review), Enter submits + Shift+Enter newline, custom ✕ clear button (textarea has no native type=search clear)|I.ui
+T39|x|Q&A section headings ("Narrow it down:"/"Not quite right? Did you mean:") were plain text blending in → styled as bold h2 w/ spacing from result panel above|I.ui
+T40|x|"Find code" button was stretched full-height matching 2-row textarea → moved below textarea, full-width, natural height|I.ui
+T41|x|main content (#resolver) distinguished from page bg: tinted body bg + card (border/radius/shadow) around resolver section|I.ui
+T42|x|Q&A section ("Not quite right?"/"Narrow it down") given own tinted card, distinct from result panel + candidate rows above|I.ui
+T43|x|result panel was a dead end (selected candidate/leaf → stuck) → added "🔄 Not this one? Try again" reopening Q&A from original search candidates|V13
 
 ## §B BUGS
 
