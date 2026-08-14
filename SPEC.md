@@ -38,6 +38,7 @@ R2|2022 NAICS Descriptions xlsx confirmed (T15): cols Code\|Title\|Description, 
 - ui: top of page → "How does it work?" anchor link → in-page section, diagram + text (§V11).
 - workflow: `.github/workflows/deploy.yml` — build + publish `dist/` to GitHub Pages on push to `main`.
 - deployed URL: https://krcourville.github.io/naics-code-resolver/
+- ui: page header bar (title + GitHub octocat icon, right-aligned) → link to GitHub repo https://github.com/krcourville/naics-code-resolver
 
 ## §V INVARIANTS
 
@@ -76,6 +77,8 @@ T17|x|set Vite `base: '/naics-code-resolver/'` for GitHub Pages project site|V11
 T18|x|add `.github/workflows/deploy.yml` — build + deploy to GitHub Pages on push to main|V11
 T19|x|write "How does it work?" section (diagram + text) on main page, linked via anchor|I.ui
 T20|x|README: link deployed GitHub Pages URL|-
+T21|x|add title header bar w/ GitHub octocat icon link to repo|I.ui
+T22|x|add MIT LICENSE file + package.json license field|-
 
 ## §B BUGS
 
