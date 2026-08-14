@@ -7,10 +7,12 @@
     "dev": "vp dev",
     "build": "tsc && vp build",
     "preview": "vp preview",
+    "test:e2e": "playwright test",
     "infer": "node scripts/infer.ts",
     "prepare": "vp config"
   },
   "devDependencies": {
+    "@playwright/test": "^1.62.1",
     "@types/node": "^26.2.0",
     "typescript": "~6.0.2",
     "vite": "catalog:",

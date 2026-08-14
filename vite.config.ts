@@ -11,4 +11,7 @@ export default defineConfig({
     options: { typeAware: true, typeCheck: true },
     ignorePatterns: ["beacon/**"],
   },
+  test: {
+    exclude: ["**/node_modules/**", "**/dist/**", "e2e/**"],
+  },
 });
