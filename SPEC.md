@@ -14,11 +14,15 @@ static page: free-text business description → client-side ONNX inference → 6
 - confidence bands (provisional, tune via Playwright testing): High ≥.70 → show code, no prompt | Medium .40–.69 → show code + confidence, offer narrow-down | Low <.40 → show best guess + confidence, push toward Q&A/manual browse. also trigger Q&A when top-2 scores within .10 regardless of band.
 - confidence shown numeric (0–1) & text label (high/medium/low).
 - clarifying Q&A = static NAICS hierarchy drill-down lookup. ⊥ model/LLM-generated questions.
-- NAICS hierarchy data = official Census NAICS structure file. check BEACON submodule first before separate fetch.
+- NAICS hierarchy data = official Census NAICS structure file. confirmed absent from beacon submodule (T3, searched) → fetched separately, see §R.
 - automated testing via Playwright, driven off curated business-description test-case list.
 - ⊥ accounts, ⊥ history, ⊥ analytics, ⊥ multi-language, ⊥ offline/PWA, ⊥ server-side logging.
 - ? exact confidence thresholds provisional — may shift after Playwright test runs.
-- ? whether Census NAICS structure data ships inside BEACON submodule or needs separate fetch — confirm during T3.
+
+## §R RESEARCH
+
+id|fact|source
+R1|2022 NAICS Structure xlsx = flat depth-first outline, cols Change Indicator\|2022 NAICS Code\|2022 NAICS Title. levels by code digit-len: 2=sector,3=subsector,4=industry group,5=NAICS industry,6=national industry. 3 merged-sector range codes (31-33,44-45,48-49) match BeaconModel's `__get_sector()` merge exactly. title has trailing "T" (trilateral-agreement marker) appended directly, no separator — strip when preceded by lowercase. 1012 six-digit codes for 2022 vintage, matches `beacon/create_example_data_output.txt` reported count.|https://www.census.gov/naics/2022NAICS/2022_NAICS_Structure.xlsx
 
 ## §I INTERFACES
 
@@ -41,7 +45,7 @@ V5: submit before load done → await load, then infer — ⊥ error/drop reques
 id|status|task|cites
 T1|x|add BEACON repo as git submodule|-
 T2|x|write model export script: fit BeaconModel, export fitted dictionaries/weights/sector params → naics-model.json|I.submodule
-T3|.|source/verify NAICS hierarchy structure data → naics-hierarchy.json|-
+T3|x|source/verify NAICS hierarchy structure data → naics-hierarchy.json|-
 T4|.|build async model+hierarchy loader, non-blocking|V4,V5
 T5|.|port BeaconModel predict_proba logic to TS → top-N codes + scores|V1
 T6|.|impl confidence banding + text label + top-2 margin check|V2
