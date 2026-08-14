@@ -93,6 +93,7 @@ T28|x|reword CCM link text → "A Cajun Code Monkey project", add repo name text
 T29|x|swap logo asset for tightly-cropped transparent variant (padded PNG made icon look undersized/mismatched gap vs GitHub icon)|I.ui,T26
 T30|x|split intro line: description standalone, "How does it work?" moved below search form as own link w/ emoji|I.ui,T24
 T31|x|global `a` styling: no underline, no default `:visited` purple, consistent accent/text color per context|-
+T44|x|drop hover/focus underline on all links (base `a`, try-again, breadcrumb crumbs) → color-shift (`filter: brightness(0.85)`) instead|-
 T32|x|reword intro line, playful tone: "What does your business do? Type it below — we'll figure out the code."|I.ui
 T33|x|whitespace: widen gap header→intro text, tighten gap search form→"How does it work?" link|I.ui
 T34|x|add emoji indicator (🟢/🟡/🔴) to confidence display, banded on label|V8

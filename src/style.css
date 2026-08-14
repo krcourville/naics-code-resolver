@@ -54,8 +54,9 @@ a {
   &:visited {
     color: var(--accent);
   }
-  &:hover {
-    text-decoration: underline;
+  &:hover,
+  &:focus-visible {
+    filter: brightness(0.85);
   }
 }
 
@@ -264,7 +265,7 @@ code {
     cursor: pointer;
 
     &:hover {
-      text-decoration: underline;
+      filter: brightness(0.85);
     }
     &:focus-visible {
       outline: 2px solid var(--accent);
@@ -371,7 +372,7 @@ code {
 
     &:hover {
       box-shadow: none;
-      text-decoration: underline;
+      filter: brightness(0.85);
     }
   }
 
