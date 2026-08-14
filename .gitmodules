@@ -1,0 +1,3 @@
+[submodule "beacon"]
+	path = beacon
+	url = https://github.com/uscensusbureau/BEACON.git
