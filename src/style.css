@@ -87,6 +87,29 @@ code {
   gap: 20px;
 }
 
+#resolver a {
+  color: var(--accent);
+}
+
+#how-it-works {
+  margin-top: 56px;
+  padding-top: 32px;
+  border-top: 1px solid var(--border);
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+
+  a {
+    color: var(--accent);
+  }
+
+  svg {
+    width: 100%;
+    height: auto;
+  }
+}
+
 #naics-form {
   display: flex;
   gap: 8px;

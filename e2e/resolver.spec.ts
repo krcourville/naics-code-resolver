@@ -113,3 +113,15 @@ test("Q&A candidate picks show a definition snippet to help choose", async ({ pa
   const defCount = await page.locator("#naics-qa button .definition").count();
   expect(defCount).toBeGreaterThan(0);
 });
+
+test("'How does it work?' link scrolls to the in-page section", async ({ page }) => {
+  const errors: string[] = [];
+  page.on("pageerror", (e) => errors.push(String(e)));
+
+  await page.goto("/");
+  await expect(page.locator("#how-it-works")).toBeAttached();
+  await page.click('a[href="#how-it-works"]');
+  await expect(page.locator("#how-it-works")).toBeInViewport();
+  expect(page.url()).toContain("#how-it-works");
+  expect(errors).toEqual([]);
+});
