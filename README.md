@@ -3,6 +3,8 @@
 A that resolves NAICS code for a business based on a description, using
 a machine learning model and entirely in your web browser.
 
+**Live:** https://krcourville.github.io/naics-code-resolver/
+
 ## Getting Started
 
 ```bash
