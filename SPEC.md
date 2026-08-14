@@ -49,7 +49,7 @@ T1|x|add BEACON repo as git submodule|-
 T2|x|write model export script: fit BeaconModel, export fitted dictionaries/weights/sector params → naics-model.json|I.submodule
 T3|x|source/verify NAICS hierarchy structure data → naics-hierarchy.json|-
 T4|x|port BeaconModel clean_text/stem/n-gram/scoring logic to TS → predict_proba equivalent, top-N codes+scores|V1
-T5|.|verify TS port parity vs Python BeaconModel — same inputs → same top-N codes/scores (tolerance). oracle = beacon/beacon_example.py + beacon_example_output.txt (22 example descriptions, restaurant probs, dealer top10)|T4,T12,T13,V6
+T5|x|verify TS port parity vs Python BeaconModel — same inputs → same top-N codes/scores (tolerance). oracle = beacon/beacon_example.py + beacon_example_output.txt (22 example descriptions, restaurant probs, dealer top10)|T4,T12,T13,V6
 T6|.|build async model+hierarchy loader, non-blocking|V4,V5
 T7|.|impl confidence banding + text label + top-2 margin check|V2
 T8|.|impl NAICS hierarchy drill-down clarifying-question UI|V2
