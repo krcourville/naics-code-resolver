@@ -54,22 +54,29 @@ test.afterAll(() => {
   console.log("confidence band distribution:", JSON.stringify(bandTally, null, 2));
 });
 
-// §V9: Q&A must offer the model's own top-N candidates, not the full
-// hierarchy — "hvac" is a known 2-way ambiguity (238220 vs 423730).
-test("Q&A offers model candidates, not the full hierarchy root", async ({ page }) => {
+// §V9/§C: Q&A must offer the model's own top-N candidates via a decision tree built from
+// where their hierarchy paths diverge, not the full hierarchy — "hvac" is a known 2-way
+// ambiguity (238220 vs 423730) that splits immediately at the sector level.
+test("Q&A offers model candidates via decision tree, not the full hierarchy root", async ({
+  page,
+}) => {
   await page.goto("/");
   await page.fill("#naics-input", "hvac");
   await page.click("#naics-submit");
   await expect(page.locator("#naics-qa")).toBeVisible();
 
-  const qaButtons = page.locator("#naics-qa button[data-code]");
-  const codes = await qaButtons.evaluateAll((els) => els.map((el) => el.getAttribute("data-code")));
-  expect(codes).toContain("238220");
-  expect(codes).toContain("423730");
-  expect(codes.length, "candidate picks, not the ~20 hierarchy sectors").toBeLessThan(10);
+  const groupButtons = page.locator("#naics-qa button[data-group]");
+  const groups = await groupButtons.evaluateAll((els) =>
+    els.map((el) => el.getAttribute("data-group")),
+  );
+  expect(groups, "candidates diverge at the sector level").toEqual(
+    expect.arrayContaining(["23", "42"]),
+  );
+  expect(groups.length, "branch choices, not the ~20 hierarchy sectors").toBeLessThan(10);
   await expect(page.locator("#naics-qa-browse")).toBeVisible();
 
-  // picking a candidate resolves straight to it (§V3), no intermediate hierarchy step
+  // pick the Wholesale Trade branch -> down to its single remaining candidate
+  await page.locator('#naics-qa button[data-group="42"]').click();
   await page.locator('#naics-qa button[data-code="423730"]').click();
   const resultText = await page.locator("#naics-result").textContent();
   expect(resultText).toContain("423730");
@@ -110,6 +117,8 @@ test("Q&A candidate picks show a definition snippet to help choose", async ({ pa
   await page.fill("#naics-input", "hvac");
   await page.click("#naics-submit");
   await expect(page.locator("#naics-qa")).toBeVisible();
+  // "hvac" candidates diverge at the sector level -> drill one branch down to the candidate list
+  await page.locator('#naics-qa button[data-group="42"]').click();
   const defCount = await page.locator("#naics-qa button .definition").count();
   expect(defCount).toBeGreaterThan(0);
 });

@@ -32,7 +32,7 @@ R3|BEACON (submodule, source of ported logic) licensed CC0 1.0 Universal — pub
 
 ## §I INTERFACES
 
-- ui: single page. text input (auto-grow textarea, Enter submits/Shift+Enter newline, custom ✕ clear) → submit → result (code + confidence, per §C band) shown always; medium/low band → Q&A offered to refine shown result → updated result. result panel & Q&A candidate picks show definition + illustrative examples when present for that code (§V10).
+- ui: single page. text input (auto-grow textarea, Enter submits/Shift+Enter newline) + secondary "Clear" button (next to submit, clears input AND result/Q&A) → submit → result (code + confidence, per §C band) shown always; medium/low band → Q&A offered to refine shown result → updated result. result panel & Q&A candidate picks show definition + illustrative examples when present for that code (§V10).
 - file: `public/naics-model.json` — fitted BeaconModel artifact, sparse format: `sector_naics: {sector:[naicsCode,...]}` (replaces dense `naics_indices`), `dict_ncombs_props`/`dict_ems_props`: `{sector:{ngram:{naicsCode:proportion}}}` (nonzero only), weights unchanged (`{sector:{ngram:weight}}`).
 - file: `public/naics-hierarchy.json` — code→node tree, node = `{title, definition?, examples?[], children}`. `definition`/`examples` optional — only codes with a Census descriptions-file entry carry them (§R2).
 - script: `scripts/build-model.*` — fits BeaconModel via BEACON submodule, exports params → `naics-model.json`. manual invoke, ⊥ CI.
@@ -53,7 +53,8 @@ V5: submit before load done → await load, then infer — ⊥ error/drop reques
 V6: TS-ported inference ! match Python BeaconModel output (top-N codes + scores, within tolerance) for oracle test set.
 V7: `naics-model.json` gzip size ! exceed 10MB (static-hosting budget).
 V8: result display ! show confidence numeric[0,1] & text label (high|medium|low) together, ? emoji indicator (🟢/🟡/🔴) per band.
-V9: Q&A offered (§V2) → first present model's own top-N candidates (code+title+confidence w/ emoji+full definition, score>0) as picks, ⊥ full hierarchy root browse, ⊥ truncated/snippet text. picking a candidate → resolved (§V3) if leaf, else hierarchy drill-down continues from that candidate's branch. no candidates match (user rejects) → fall back to full hierarchy root browse.
+V9: Q&A offered (§V2) → present model's own top-N candidates via a decision tree, ⊥ full hierarchy root browse, ⊥ flat wall-of-text list when candidates >1. tree built from where candidate hierarchy paths first diverge (§V14) — branch choice per divergence point, recursing until ≤1 candidate per branch, then flat card (code+title+confidence w/ emoji+full definition, ⊥ truncated/snippet text). no candidates match (user rejects "None of these") → fall back to full hierarchy root browse.
+V14: decision-tree branch choices ! derive from static NAICS hierarchy structure only (candidates' shared ancestor paths), ⊥ LLM/model-generated question text (§C).
 V12: hierarchy drill-down UI = directory-style nav: breadcrumb trail (root → current, each ancestor clickable) + "Up" control, ⊥ dead-end w/ no way back. options list ! show emoji icon per row (📁 branch, 🏷️ leaf/resolvable code).
 V13: any resolved result (candidate pick or hierarchy leaf) ! offer a way back — "See other matches" reopens Q&A from the original search's model candidates, ⊥ dead end regardless of path taken to reach the result.
 V10: code missing definition/examples in hierarchy data → UI ! error/crash/blank — falls back to title-only display.
@@ -94,6 +95,9 @@ T29|x|swap logo asset for tightly-cropped transparent variant (padded PNG made i
 T30|x|split intro line: description standalone, "How does it work?" moved below search form as own link w/ emoji|I.ui,T24
 T31|x|global `a` styling: no underline, no default `:visited` purple, consistent accent/text color per context|-
 T44|x|drop hover/focus underline on all links (base `a`, try-again, breadcrumb crumbs) → color-shift (`filter: brightness(0.85)`) instead|-
+T45|x|replace flat candidate list w/ decision tree: branch on where candidate hierarchy paths diverge, breadcrumb+Up nav, one question at a time instead of N full-text cards|V9,V14
+T46|x|clear button: didn't clear result/Q&A (stale answer stayed onscreen), overlaid textarea → now resets result+Q&A too, moved to secondary button next to "Find code"|I.ui
+T47|x|clear button was hidden/pop-in when input empty → always visible, `disabled` (no-op) instead|I.ui
 T32|x|reword intro line, playful tone: "What does your business do? Type it below — we'll figure out the code."|I.ui
 T33|x|whitespace: widen gap header→intro text, tighten gap search form→"How does it work?" link|I.ui
 T34|x|add emoji indicator (🟢/🟡/🔴) to confidence display, banded on label|V8

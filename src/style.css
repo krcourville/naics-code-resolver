@@ -152,16 +152,11 @@ code {
   gap: 8px;
 }
 
-#naics-input-wrap {
-  position: relative;
-  flex: 1;
-}
-
 #naics-input {
   width: 100%;
   box-sizing: border-box;
   font: inherit;
-  padding: 10px 32px 10px 12px;
+  padding: 10px 12px;
   border-radius: 6px;
   border: 1px solid var(--border);
   color: var(--text-h);
@@ -176,31 +171,13 @@ code {
   }
 }
 
-#naics-clear {
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  width: 20px;
-  height: 20px;
-  padding: 0;
-  border: none;
-  border-radius: 50%;
-  font-size: 12px;
-  line-height: 1;
-  color: var(--text);
-  background: var(--code-bg);
-  cursor: pointer;
-
-  &:hover {
-    color: var(--text-h);
-  }
-  &:focus-visible {
-    outline: 2px solid var(--accent);
-    outline-offset: 1px;
-  }
+#naics-form-actions {
+  display: flex;
+  gap: 8px;
 }
 
 #naics-submit {
+  flex: 1;
   font: inherit;
   padding: 10px 16px;
   border-radius: 6px;
@@ -216,6 +193,33 @@ code {
   &:focus-visible {
     outline: 2px solid var(--accent);
     outline-offset: 2px;
+  }
+}
+
+#naics-clear {
+  font: inherit;
+  padding: 10px 16px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  color: var(--text);
+  background: var(--bg);
+  cursor: pointer;
+  transition: border-color 0.3s;
+
+  &:hover {
+    border-color: var(--text);
+  }
+  &:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+  &:disabled {
+    color: var(--border);
+    cursor: default;
+
+    &:hover {
+      border-color: var(--border);
+    }
   }
 }
 

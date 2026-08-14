@@ -31,11 +31,11 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
 <section id="resolver">
   <p>What does your business do? Type it below — we'll figure out the code.</p>
   <form id="naics-form">
-    <div id="naics-input-wrap">
-      <textarea id="naics-input" rows="2" placeholder="e.g. retail bakery"></textarea>
-      <button id="naics-clear" type="button" aria-label="Clear" hidden>✕</button>
+    <textarea id="naics-input" rows="2" placeholder="e.g. retail bakery"></textarea>
+    <div id="naics-form-actions">
+      <button id="naics-submit" type="submit">Find code</button>
+      <button id="naics-clear" type="button" disabled>Clear</button>
     </div>
-    <button id="naics-submit" type="submit">Find code</button>
   </form>
   <a id="how-it-works-link" href="https://github.com/krcourville/naics-code-resolver#how-does-it-work" target="_blank" rel="noopener">💡 How does it work?</a>
   <div id="naics-result" hidden></div>
@@ -136,34 +136,106 @@ function renderHierarchyQA(
   }
 }
 
-// §V9: Q&A first offers the model's own top-N candidates, not the full hierarchy.
-// Candidate picks show code, confidence, and full definition (§V10: absent -> just title) to help choose.
-function renderQA(candidates: NaicsScore[], hierarchy: HierarchyTree, titles: Map<string, string>) {
+interface CandidateGroup {
+  code: string;
+  title: string;
+  candidates: NaicsScore[];
+}
+
+// Where do these candidates' hierarchy paths first disagree? Everything up to that depth is
+// shared context (skip it — it's not a useful question); the groups AT that depth are the
+// real fork. All model candidates are leaf codes, so paths are directly comparable by depth.
+function divergeCandidates(candidates: NaicsScore[], hierarchy: HierarchyTree): CandidateGroup[] {
+  const paths = candidates.map((c) => ({ c, path: getAncestorPath(hierarchy, c.naics) }));
+  let depth = 0;
+  while (!paths.some((p) => p.path.length <= depth + 1)) {
+    const codesHere = new Set(paths.map((p) => p.path[depth].code));
+    if (codesHere.size > 1) break;
+    depth++;
+  }
+  const groups = new Map<string, CandidateGroup>();
+  for (const { c, path } of paths) {
+    const seg = path[depth];
+    const code = seg?.code ?? c.naics;
+    const title = seg?.title ?? getNode(hierarchy, c.naics)?.title ?? c.naics;
+    if (!groups.has(code)) groups.set(code, { code, title, candidates: [] });
+    groups.get(code)!.candidates.push(c);
+  }
+  return [...groups.values()];
+}
+
+function candidateCardHtml(
+  c: NaicsScore,
+  hierarchy: HierarchyTree,
+  titles: Map<string, string>,
+): string {
+  const node = getNode(hierarchy, c.naics);
+  const title = node?.title ?? titles.get(c.naics) ?? c.naics;
+  const { label } = classifyConfidence(c.score, undefined);
+  const def = node?.definition ? `<p class="definition">${node.definition}</p>` : "";
+  return `<li><button type="button" data-code="${c.naics}">
+    <div class="qa-cand-head">
+      <span class="qa-cand-code">${c.naics}</span>
+      <span class="qa-cand-title">${title}</span>
+      <span class="qa-cand-conf">${CONFIDENCE_EMOJI[label] ?? ""} ${c.score.toFixed(2)}</span>
+    </div>
+    ${def}
+  </button></li>`;
+}
+
+// §V9/§C: Q&A = model's own top-N candidates, narrowed via a decision tree built from where
+// their hierarchy paths diverge — one branching question at a time instead of a flat wall of
+// text, ⊥ LLM-generated questions. Falls back to a flat candidate list once ≤1 candidate or no
+// further divergence remains. `stack` = decision history for breadcrumb + Up nav.
+function renderQAStep(
+  hierarchy: HierarchyTree,
+  titles: Map<string, string>,
+  stack: { candidates: NaicsScore[]; label: string | null }[],
+) {
   qaEl.hidden = false;
-  qaEl.innerHTML = `
-    <h2 class="qa-heading">Not quite right? Did you mean:</h2>
-    <ul>${candidates
-      .map((c) => {
-        const node = getNode(hierarchy, c.naics);
-        const title = node?.title ?? titles.get(c.naics) ?? c.naics;
-        const { label } = classifyConfidence(c.score, undefined);
-        const def = node?.definition ? `<p class="definition">${node.definition}</p>` : "";
-        return `<li><button type="button" data-code="${c.naics}">
-          <div class="qa-cand-head">
-            <span class="qa-cand-code">${c.naics}</span>
-            <span class="qa-cand-title">${title}</span>
-            <span class="qa-cand-conf">${CONFIDENCE_EMOJI[label] ?? ""} ${c.score.toFixed(2)}</span>
-          </div>
-          ${def}
-        </button></li>`;
-      })
-      .join("")}</ul>
-    <button type="button" id="naics-qa-browse">None of these — browse full hierarchy</button>
-  `;
-  for (const btn of qaEl.querySelectorAll<HTMLButtonElement>("button[data-code]")) {
-    btn.addEventListener("click", () => {
-      const code = btn.dataset.code!;
-      if (isResolved(hierarchy, code)) {
+  const { candidates } = stack[stack.length - 1];
+  const groups = candidates.length > 1 ? divergeCandidates(candidates, hierarchy) : [];
+  const crumbs = stack
+    .map(
+      (s, i) =>
+        `<button type="button" class="crumb" data-idx="${i}">${i === 0 ? "🎯" : "📁"} ${s.label ?? "Top matches"}</button>`,
+    )
+    .join(" › ");
+  const up = stack.length > 1 ? `<button type="button" id="naics-qa-up">⬆️ Up</button>` : "";
+
+  if (groups.length > 1) {
+    qaEl.innerHTML = `
+      <nav class="qa-breadcrumb">${crumbs}</nav>
+      ${up}
+      <h2 class="qa-heading">Which is closer?</h2>
+      <ul>${groups
+        .map(
+          (g) =>
+            `<li><button type="button" data-group="${g.code}">📁 ${g.title} <span class="qa-cand-conf">(${g.candidates.length} match${g.candidates.length > 1 ? "es" : ""})</span></button></li>`,
+        )
+        .join("")}</ul>
+      <button type="button" id="naics-qa-browse">None of these — browse full hierarchy</button>
+    `;
+    for (const btn of qaEl.querySelectorAll<HTMLButtonElement>("button[data-group]")) {
+      btn.addEventListener("click", () => {
+        const group = groups.find((g) => g.code === btn.dataset.group)!;
+        renderQAStep(hierarchy, titles, [
+          ...stack,
+          { candidates: group.candidates, label: group.title },
+        ]);
+      });
+    }
+  } else {
+    qaEl.innerHTML = `
+      <nav class="qa-breadcrumb">${crumbs}</nav>
+      ${up}
+      <h2 class="qa-heading">${candidates.length > 1 ? "Not quite right? Did you mean:" : "Did you mean:"}</h2>
+      <ul>${candidates.map((c) => candidateCardHtml(c, hierarchy, titles)).join("")}</ul>
+      <button type="button" id="naics-qa-browse">None of these — browse full hierarchy</button>
+    `;
+    for (const btn of qaEl.querySelectorAll<HTMLButtonElement>("button[data-code]")) {
+      btn.addEventListener("click", () => {
+        const code = btn.dataset.code!;
         const candidate = candidates.find((c) => c.naics === code)!;
         renderResult(
           code,
@@ -173,14 +245,24 @@ function renderQA(candidates: NaicsScore[], hierarchy: HierarchyTree, titles: Ma
           classifyConfidence(candidate.score, undefined).label,
         );
         qaEl.hidden = true;
-      } else {
-        renderHierarchyQA(hierarchy, titles, getAncestorPath(hierarchy, code));
-      }
+      });
+    }
+  }
+  qaEl.querySelector<HTMLButtonElement>("#naics-qa-up")?.addEventListener("click", () => {
+    renderQAStep(hierarchy, titles, stack.slice(0, -1));
+  });
+  for (const btn of qaEl.querySelectorAll<HTMLButtonElement>("button.crumb")) {
+    btn.addEventListener("click", () => {
+      renderQAStep(hierarchy, titles, stack.slice(0, Number(btn.dataset.idx) + 1));
     });
   }
   qaEl.querySelector<HTMLButtonElement>("#naics-qa-browse")!.addEventListener("click", () => {
     renderHierarchyQA(hierarchy, titles, []);
   });
+}
+
+function renderQA(candidates: NaicsScore[], hierarchy: HierarchyTree, titles: Map<string, string>) {
+  renderQAStep(hierarchy, titles, [{ candidates, label: null }]);
 }
 
 async function handleSubmit(text: string) {
@@ -217,13 +299,19 @@ input.addEventListener("keydown", (event) => {
 input.addEventListener("input", () => {
   input.style.height = "auto";
   input.style.height = `${input.scrollHeight}px`;
-  clearBtn.hidden = input.value.length === 0;
+  clearBtn.disabled = input.value.length === 0;
 });
 
-// textarea has no native type="search" clear-✕ — replicate it.
+// textarea has no native type="search" clear-✕ — replicate it, and also reset
+// results/Q&A so a cleared search doesn't leave a stale answer on screen.
 clearBtn.addEventListener("click", () => {
   input.value = "";
   input.style.height = "auto";
-  clearBtn.hidden = true;
+  clearBtn.disabled = true;
+  resultEl.hidden = true;
+  resultEl.innerHTML = "";
+  qaEl.hidden = true;
+  qaEl.innerHTML = "";
+  lastSearch = null;
   input.focus();
 });
