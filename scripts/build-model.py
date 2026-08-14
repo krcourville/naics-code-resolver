@@ -14,7 +14,21 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 BEACON_DIR = REPO_ROOT / "beacon"
 
 
+def _sparsify(props_by_sector: dict, naics_by_sector: dict) -> dict:
+    # dict_ncombs_props_/dict_ems_props_ are dense per-sector arrays (one float per
+    # NAICS code in the sector) but ~98.8% zero — BEACON's purity weights concentrate
+    # each n-gram on ~1 code. Sparse {naicsCode: proportion} keeps only nonzero entries.
+    return {
+        sector: {
+            nc: {naics_by_sector[sector][i]: round(v, 6) for i, v in enumerate(arr) if v != 0.0}
+            for nc, arr in props.items()
+        }
+        for sector, props in props_by_sector.items()
+    }
+
+
 def export_model(mod) -> dict:
+    naics_by_sector = {sector: list(idx.keys()) for sector, idx in mod.naics_indices_.items()}
     return {
         "freq_thresh": mod.freq_thresh,
         "wt_umb": mod.wt_umb,
@@ -22,10 +36,10 @@ def export_model(mod) -> dict:
         "naics": mod.naics_,
         "sectors": mod.sectors_,
         "sample_sizes": mod.sample_sizes_,
-        "naics_indices": mod.naics_indices_,
-        "dict_ncombs_props": mod.dict_ncombs_props_,
+        "sector_naics": naics_by_sector,
+        "dict_ncombs_props": _sparsify(mod.dict_ncombs_props_, naics_by_sector),
         "dict_ncombs_weights": mod.dict_ncombs_weights_,
-        "dict_ems_props": mod.dict_ems_props_,
+        "dict_ems_props": _sparsify(mod.dict_ems_props_, naics_by_sector),
         "dict_ems_weights": mod.dict_ems_weights_,
     }
 
@@ -60,7 +74,7 @@ def main() -> None:
 
     out_path = Path(args.out)
     out_path.parent.mkdir(parents=True, exist_ok=True)
-    out_path.write_text(json.dumps(export_model(mod)))
+    out_path.write_text(json.dumps(export_model(mod), separators=(",", ":")))
     print(f"wrote {out_path}")
 
 

@@ -9,7 +9,7 @@ static page: free-text business description → client-side ONNX inference → 6
 - Vite+ static build (`vp build`), vanilla TS, single page. ⊥ backend, ⊥ API routes, ⊥ server-side inference.
 - BeaconModel logic ported to TS, runs client-side only. ⊥ ONNX/WASM runtime — BeaconModel = custom sklearn `BaseEstimator` (hand-rolled clean_text/stem/n-gram dict lookup/purity-weighted scoring), ⊥ standard sklearn Pipeline → skl2onnx has ⊥ registered converter, ONNX export infeasible.
 - BEACON census repo added as git submodule — source of truth for fit/predict logic to port.
-- standalone script fits BeaconModel, exports fitted dictionaries/weights/sector params → `naics-model.json` on demand. artifact committed to source control. ⊥ auto-run in CI — user updates manually.
+- standalone script fits BeaconModel, exports fitted dictionaries/weights/sector params → `naics-model.json` on demand. sparse format required — dense per-sector float arrays are ~98.8% zero (BEACON purity weights concentrate each n-gram on ~1 NAICS code, avg 1.17 nonzero/key on real 2017 data) and blow up to 391MB; sparse {ngram:{naicsCode:prop}} + 6-decimal rounding + compact JSON → 35.5MB raw/5.5MB gzip. artifact committed to source control. ⊥ auto-run in CI — user updates manually.
 - model + NAICS hierarchy JSON load async on mount. ⊥ block text input — user types immediately. submit before load done → await load, then infer.
 - confidence bands (provisional, tune via Playwright testing): High ≥.70 → show code, no prompt | Medium .40–.69 → show code + confidence, offer narrow-down | Low <.40 → show best guess + confidence, push toward Q&A/manual browse. also trigger Q&A when top-2 scores within .10 regardless of band.
 - confidence shown numeric (0–1) & text label (high/medium/low).
@@ -27,7 +27,7 @@ R1|2022 NAICS Structure xlsx = flat depth-first outline, cols Change Indicator\|
 ## §I INTERFACES
 
 - ui: single page. text input → submit → result (code + confidence) | clarifying-question flow → result.
-- file: `public/naics-model.json` — fitted BeaconModel artifact (word/combo dictionaries, purity weights, sector params).
+- file: `public/naics-model.json` — fitted BeaconModel artifact, sparse format: `sector_naics: {sector:[naicsCode,...]}` (replaces dense `naics_indices`), `dict_ncombs_props`/`dict_ems_props`: `{sector:{ngram:{naicsCode:proportion}}}` (nonzero only), weights unchanged (`{sector:{ngram:weight}}`).
 - file: `public/naics-hierarchy.json` — code→description tree.
 - script: `scripts/build-model.*` — fits BeaconModel via BEACON submodule, exports params → `naics-model.json`. manual invoke, ⊥ CI.
 - submodule: `beacon` — BEACON census repo (sklearn pipeline + training data + possible NAICS structure data).
@@ -40,6 +40,7 @@ V3: final displayed code ! valid 6-digit NAICS code.
 V4: model/hierarchy load ! block text input.
 V5: submit before load done → await load, then infer — ⊥ error/drop request.
 V6: TS-ported inference ! match Python BeaconModel output (top-N codes + scores, within tolerance) for oracle test set.
+V7: `naics-model.json` gzip size ! exceed 10MB (static-hosting budget).
 
 ## §T TASKS
 
@@ -48,15 +49,18 @@ T1|x|add BEACON repo as git submodule|-
 T2|x|write model export script: fit BeaconModel, export fitted dictionaries/weights/sector params → naics-model.json|I.submodule
 T3|x|source/verify NAICS hierarchy structure data → naics-hierarchy.json|-
 T4|x|port BeaconModel clean_text/stem/n-gram/scoring logic to TS → predict_proba equivalent, top-N codes+scores|V1
-T5|.|verify TS port parity vs Python BeaconModel — same inputs → same top-N codes/scores (tolerance). oracle = beacon/beacon_example.py + beacon_example_output.txt (22 example descriptions, restaurant probs, dealer top10)|T4,V6
+T5|.|verify TS port parity vs Python BeaconModel — same inputs → same top-N codes/scores (tolerance). oracle = beacon/beacon_example.py + beacon_example_output.txt (22 example descriptions, restaurant probs, dealer top10)|T4,T12,T13,V6
 T6|.|build async model+hierarchy loader, non-blocking|V4,V5
 T7|.|impl confidence banding + text label + top-2 margin check|V2
 T8|.|impl NAICS hierarchy drill-down clarifying-question UI|V2
 T9|.|impl main page: input → submit → result/Q&A flow|I.ui
 T10|.|curate business-description test-case list|-
 T11|.|Playwright test suite over test-case list, tune confidence bands|T10,V2
+T12|x|rework naics-model.json export to sparse format (drop dense naics_indices arrays)|T2,B2,V7
+T13|x|update TS BeaconModel port to read sparse naics-model.json format|T4,B2,T12
 
 ## §B BUGS
 
 id|date|cause|fix
 B1|2026-08-14|BeaconModel = custom sklearn BaseEstimator (hand-rolled clean_text/stem/n-gram dict/purity scoring), ⊥ standard Pipeline → skl2onnx ⊥ converter, ONNX export infeasible|ported BEACON fit/predict logic to TS, artifact = naics-model.json not naics.onnx (§C,§I,T2,T5)
+B2|2026-08-14|naics-model.json dense per-sector float arrays ~98.8% zero → 391MB real-data artifact, unshippable|sparse {naicsCode:prop} encoding + rounding + compact JSON → 35.5MB/5.5MB gzip (§C,§I,V7,T12,T13)

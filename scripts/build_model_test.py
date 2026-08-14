@@ -29,7 +29,7 @@ data = build_model.export_model(mod)
 
 expected_keys = {
     "freq_thresh", "wt_umb", "wt_exact", "naics", "sectors", "sample_sizes",
-    "naics_indices", "dict_ncombs_props", "dict_ncombs_weights",
+    "sector_naics", "dict_ncombs_props", "dict_ncombs_weights",
     "dict_ems_props", "dict_ems_weights",
 }
 assert set(data.keys()) == expected_keys, data.keys()
@@ -37,11 +37,15 @@ assert set(data["naics"]) == {"111150", "111110", "445120", "445110"}
 assert set(data["sectors"]) == {"11", "44"}
 assert set(data["dict_ncombs_props"].keys()) == {"00", "11", "44"}
 for sector in data["dict_ncombs_props"]:
-    assert sector in data["naics_indices"]
+    assert sector in data["sector_naics"]
     assert sector in data["dict_ncombs_props"]
     assert sector in data["dict_ncombs_weights"]
     for nc, props in data["dict_ncombs_props"][sector].items():
-        assert isinstance(props, list) and all(isinstance(p, float) for p in props)
+        # sparse: {naicsCode: proportion}, nonzero only
+        assert isinstance(props, dict) and len(props) > 0
+        for naics, p in props.items():
+            assert naics in data["sector_naics"][sector]
+            assert isinstance(p, float) and p != 0.0
         assert nc in data["dict_ncombs_weights"][sector]
         assert isinstance(data["dict_ncombs_weights"][sector][nc], float)
 

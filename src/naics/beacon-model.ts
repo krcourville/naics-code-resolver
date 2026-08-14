@@ -12,10 +12,11 @@ export interface BeaconParams {
   naics: string[];
   sectors: string[];
   sample_sizes: Record<string, number>;
-  naics_indices: Record<string, Record<string, number>>;
-  dict_ncombs_props: Record<string, Record<string, number[]>>;
+  sector_naics: Record<string, string[]>;
+  // sparse: {sector: {ngram: {naicsCode: proportion}}}, nonzero entries only
+  dict_ncombs_props: Record<string, Record<string, Record<string, number>>>;
   dict_ncombs_weights: Record<string, Record<string, number>>;
-  dict_ems_props: Record<string, Record<string, number[]>>;
+  dict_ems_props: Record<string, Record<string, Record<string, number>>>;
   dict_ems_weights: Record<string, Record<string, number>>;
 }
 
@@ -73,34 +74,30 @@ export class BeaconModel {
   }
 
   private calcScoresNonexact(feats: string[], sector: string): Record<string, number> {
-    const { naics_indices, dict_ncombs_weights, dict_ncombs_props } = this.params;
+    const { sector_naics, dict_ncombs_weights, dict_ncombs_props } = this.params;
     const scores: Record<string, number> = {};
-    for (const naics in naics_indices[sector]) scores[naics] = 0.0;
+    for (const naics of sector_naics[sector]) scores[naics] = 0.0;
     for (const nc of feats) {
-      for (const naics in naics_indices[sector]) {
-        const idx = naics_indices[sector][naics];
-        scores[naics] += dict_ncombs_weights[sector][nc] * dict_ncombs_props[sector][nc][idx];
-      }
+      const weight = dict_ncombs_weights[sector][nc];
+      const props = dict_ncombs_props[sector][nc];
+      for (const naics in props) scores[naics] += weight * props[naics];
     }
     return normScores(scores);
   }
 
   private calcScoresExact(feats: string[], xExact: string, sector: string): Record<string, number> {
-    const { naics_indices, dict_ems_weights, dict_ems_props } = this.params;
+    const { sector_naics, dict_ems_weights, dict_ems_props } = this.params;
     const scores: Record<string, number> = {};
-    for (const naics in naics_indices[sector]) scores[naics] = 0.0;
+    for (const naics of sector_naics[sector]) scores[naics] = 0.0;
     if (xExact in dict_ems_weights[sector]) {
-      for (const naics in naics_indices[sector]) {
-        const idx = naics_indices[sector][naics];
-        scores[naics] = dict_ems_props[sector][xExact][idx];
-      }
+      const props = dict_ems_props[sector][xExact];
+      for (const naics in props) scores[naics] = props[naics];
     } else {
       for (const em of feats) {
         if (em in dict_ems_weights[sector]) {
-          for (const naics in naics_indices[sector]) {
-            const idx = naics_indices[sector][naics];
-            scores[naics] += dict_ems_weights[sector][em] * dict_ems_props[sector][em][idx];
-          }
+          const weight = dict_ems_weights[sector][em];
+          const props = dict_ems_props[sector][em];
+          for (const naics in props) scores[naics] += weight * props[naics];
         }
       }
     }
@@ -139,7 +136,7 @@ export class BeaconModel {
       scoresDict[sector] =
         scoresDict["00"][sector] > 0.0
           ? this.calcScoresEnsemble(tokens, sector)
-          : Object.fromEntries(Object.keys(this.params.naics_indices[sector]).map((n) => [n, 0.0]));
+          : Object.fromEntries(this.params.sector_naics[sector].map((n) => [n, 0.0]));
     }
     const scoresHier: Record<string, number> = {};
     for (const sector of this.params.sectors) {
