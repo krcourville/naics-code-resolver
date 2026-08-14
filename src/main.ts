@@ -10,7 +10,7 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
   <h1>NAICS Code Resolver</h1>
   <p>Describe your business. We'll match it to a 6-digit NAICS code. <a href="#how-it-works">How does it work?</a></p>
   <form id="naics-form">
-    <input id="naics-input" type="text" placeholder="e.g. retail bakery" autocomplete="off" />
+    <input id="naics-input" type="search" placeholder="e.g. retail bakery" autocomplete="off" />
     <button id="naics-submit" type="submit">Find code</button>
   </form>
   <div id="naics-result" hidden></div>
