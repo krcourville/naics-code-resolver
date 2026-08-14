@@ -7,9 +7,9 @@ static page: free-text business description → client-side ONNX inference → 6
 ## §C CONSTRAINTS
 
 - Vite+ static build (`vp build`), vanilla TS, single page. ⊥ backend, ⊥ API routes, ⊥ server-side inference.
-- ONNX Runtime Web (WASM) client-side inference only.
-- BEACON sklearn pipeline → ONNX via `skl2onnx`. BEACON census repo added as git submodule.
-- standalone script rebuilds/exports `naics.onnx` on demand. artifact committed to source control. ⊥ auto-run in CI — user updates manually.
+- BeaconModel logic ported to TS, runs client-side only. ⊥ ONNX/WASM runtime — BeaconModel = custom sklearn `BaseEstimator` (hand-rolled clean_text/stem/n-gram dict lookup/purity-weighted scoring), ⊥ standard sklearn Pipeline → skl2onnx has ⊥ registered converter, ONNX export infeasible.
+- BEACON census repo added as git submodule — source of truth for fit/predict logic to port.
+- standalone script fits BeaconModel, exports fitted dictionaries/weights/sector params → `naics-model.json` on demand. artifact committed to source control. ⊥ auto-run in CI — user updates manually.
 - model + NAICS hierarchy JSON load async on mount. ⊥ block text input — user types immediately. submit before load done → await load, then infer.
 - confidence bands (provisional, tune via Playwright testing): High ≥.70 → show code, no prompt | Medium .40–.69 → show code + confidence, offer narrow-down | Low <.40 → show best guess + confidence, push toward Q&A/manual browse. also trigger Q&A when top-2 scores within .10 regardless of band.
 - confidence shown numeric (0–1) & text label (high/medium/low).
@@ -23,9 +23,9 @@ static page: free-text business description → client-side ONNX inference → 6
 ## §I INTERFACES
 
 - ui: single page. text input → submit → result (code + confidence) | clarifying-question flow → result.
-- file: `public/naics.onnx` — model artifact.
+- file: `public/naics-model.json` — fitted BeaconModel artifact (word/combo dictionaries, purity weights, sector params).
 - file: `public/naics-hierarchy.json` — code→description tree.
-- script: `scripts/build-model.*` — rebuilds `naics.onnx` from BEACON submodule. manual invoke, ⊥ CI.
+- script: `scripts/build-model.*` — fits BeaconModel via BEACON submodule, exports params → `naics-model.json`. manual invoke, ⊥ CI.
 - submodule: `beacon` — BEACON census repo (sklearn pipeline + training data + possible NAICS structure data).
 
 ## §V INVARIANTS
@@ -40,10 +40,10 @@ V5: submit before load done → await load, then infer — ⊥ error/drop reques
 
 id|status|task|cites
 T1|x|add BEACON repo as git submodule|-
-T2|.|write model export script: BEACON sklearn pipeline → naics.onnx via skl2onnx|I.submodule
+T2|x|write model export script: fit BeaconModel, export fitted dictionaries/weights/sector params → naics-model.json|I.submodule
 T3|.|source/verify NAICS hierarchy structure data → naics-hierarchy.json|-
 T4|.|build async model+hierarchy loader, non-blocking|V4,V5
-T5|.|impl ONNX Runtime Web inference call → top-N codes + scores|V1
+T5|.|port BeaconModel predict_proba logic to TS → top-N codes + scores|V1
 T6|.|impl confidence banding + text label + top-2 margin check|V2
 T7|.|impl NAICS hierarchy drill-down clarifying-question UI|V2
 T8|.|impl main page: input → submit → result/Q&A flow|I.ui
@@ -53,3 +53,4 @@ T10|.|Playwright test suite over test-case list, tune confidence bands|T9,V2
 ## §B BUGS
 
 id|date|cause|fix
+B1|2026-08-14|BeaconModel = custom sklearn BaseEstimator (hand-rolled clean_text/stem/n-gram dict/purity scoring), ⊥ standard Pipeline → skl2onnx ⊥ converter, ONNX export infeasible|ported BEACON fit/predict logic to TS, artifact = naics-model.json not naics.onnx (§C,§I,T2,T5)
