@@ -5,71 +5,32 @@ import { drilldownOptions, getNode, isResolved } from "./naics/drilldown.ts";
 import type { HierarchyTree } from "./naics/hierarchy.ts";
 import type { NaicsScore } from "./naics/beacon-model.ts";
 
+// public/ assets need import.meta.env.BASE_URL prefix (§V11) — index.html-only rewrite doesn't reach JS-injected HTML.
+const base = import.meta.env.BASE_URL;
+
 document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
 <header id="site-header">
   <h1>NAICS Code Resolver</h1>
-  <a href="https://github.com/krcourville/naics-code-resolver" target="_blank" rel="noopener" aria-label="View source on GitHub">
-    <svg height="24" width="24" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8Z"></path></svg>
-  </a>
+  <div id="header-links">
+    <a href="https://cajuncodemonkey.com/" target="_blank" rel="noopener" id="ccm-link">
+      <img src="${base}cajun-code-monkey.png" alt="" width="25" height="28" />
+      A Cajun Code Monkey project
+    </a>
+    <a href="https://github.com/krcourville/naics-code-resolver" target="_blank" rel="noopener">
+      <svg height="28" width="28" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8Z"></path></svg>
+      naics-code-resolver
+    </a>
+  </div>
 </header>
 <section id="resolver">
-  <p>Describe your business. We'll match it to a 6-digit NAICS code. <a href="#how-it-works">How does it work?</a></p>
+  <p>What does your business do? Type it below — we'll figure out the code.</p>
   <form id="naics-form">
     <input id="naics-input" type="search" placeholder="e.g. retail bakery" autocomplete="off" />
     <button id="naics-submit" type="submit">Find code</button>
   </form>
+  <a id="how-it-works-link" href="https://github.com/krcourville/naics-code-resolver#how-does-it-work" target="_blank" rel="noopener">💡 How does it work?</a>
   <div id="naics-result" hidden></div>
   <div id="naics-qa" hidden></div>
-</section>
-
-<section id="how-it-works">
-  <h2>How does it work?</h2>
-  <p>
-    Everything runs in your browser — no server, no API calls, no data leaves
-    your machine. A ~5MB model file (a TypeScript port of the
-    <a href="https://github.com/uscensusbureau/beacon" target="_blank" rel="noopener">Census Bureau's BEACON model</a>)
-    loads on page load and scores your description against all ~1,000
-    six-digit NAICS codes using n-gram matching, entirely client-side.
-  </p>
-  <svg viewBox="0 0 600 340" role="img" aria-label="Flow diagram: description typed, scored client-side against the NAICS codes, then either shown directly (high confidence) or narrowed via Q&amp;A (medium/low confidence), ending in a confirmed 6-digit code.">
-    <defs>
-      <marker id="arrow" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto">
-        <path d="M0,0 L8,4 L0,8 z" fill="var(--text)" />
-      </marker>
-    </defs>
-    <g fill="none" stroke="var(--border)" stroke-width="1.5">
-      <rect x="180" y="10" width="240" height="44" rx="6" />
-      <rect x="180" y="90" width="240" height="54" rx="6" />
-      <rect x="30" y="190" width="240" height="54" rx="6" />
-      <rect x="330" y="190" width="240" height="54" rx="6" />
-      <rect x="180" y="286" width="240" height="44" rx="6" />
-    </g>
-    <g fill="var(--text-h)" font-family="var(--sans)" font-size="14" text-anchor="middle">
-      <text x="300" y="37">Type a business description</text>
-      <text x="300" y="112">Scored client-side against ~1,000</text>
-      <text x="300" y="130">NAICS codes (ported BEACON model)</text>
-      <text x="150" y="212">High confidence (≥.70)</text>
-      <text x="150" y="230">→ code shown directly</text>
-      <text x="450" y="212">Medium/low confidence</text>
-      <text x="450" y="230">→ Q&amp;A narrows it down</text>
-      <text x="300" y="312">Confirmed 6-digit NAICS code</text>
-    </g>
-    <g stroke="var(--text)" stroke-width="1.5" marker-end="url(#arrow)">
-      <line x1="300" y1="54" x2="300" y2="86" />
-      <line x1="260" y1="144" x2="160" y2="186" />
-      <line x1="340" y1="144" x2="440" y2="186" />
-      <line x1="150" y1="244" x2="270" y2="282" />
-      <line x1="450" y1="244" x2="330" y2="282" />
-    </g>
-  </svg>
-  <p>
-    Medium/low-confidence results offer the model's own top candidate codes
-    as picks; picking one confirms it, or you can browse the full official
-    NAICS hierarchy from the top down (sector → subsector → … → national
-    industry) until a single 6-digit code is confirmed. All confidence
-    thresholds and the NAICS hierarchy itself come from the official Census
-    Bureau data — nothing is generated by a model or an LLM.
-  </p>
 </section>
 `;
 

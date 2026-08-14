@@ -114,14 +114,12 @@ test("Q&A candidate picks show a definition snippet to help choose", async ({ pa
   expect(defCount).toBeGreaterThan(0);
 });
 
-test("'How does it work?' link scrolls to the in-page section", async ({ page }) => {
-  const errors: string[] = [];
-  page.on("pageerror", (e) => errors.push(String(e)));
-
+test("'How does it work?' link points to the README section on GitHub", async ({ page }) => {
   await page.goto("/");
-  await expect(page.locator("#how-it-works")).toBeAttached();
-  await page.click('a[href="#how-it-works"]');
-  await expect(page.locator("#how-it-works")).toBeInViewport();
-  expect(page.url()).toContain("#how-it-works");
-  expect(errors).toEqual([]);
+  const link = page.locator('a:has-text("How does it work?")');
+  await expect(link).toHaveAttribute(
+    "href",
+    "https://github.com/krcourville/naics-code-resolver#how-does-it-work",
+  );
+  await expect(link).toHaveAttribute("target", "_blank");
 });

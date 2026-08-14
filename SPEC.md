@@ -20,7 +20,8 @@ static page: free-text business description → client-side ONNX inference → 6
 - ? exact confidence thresholds provisional — may shift after Playwright test runs.
 - deployed via GitHub Pages, project site (not custom domain) → served at `/naics-code-resolver/`, Vite `base` ! match.
 - deploy = GitHub Actions workflow, triggered on push to `main`: `vp build` → publish `dist/` to Pages. ⊥ manual deploy step.
-- "How does it work?" = same-page section (§C: single page, ⊥ router/multi-page) — text + diagram explaining client-side inference → confidence bands → Q&A flow. linked via in-page anchor from top of page.
+- "How does it work?" = README section, ⊥ deployed page (single page stays lean, no diagram/explainer bloat). README section carries description + mermaid diagram (client-side inference → confidence bands → Q&A flow). deployed page link → README section, ⊥ in-page anchor.
+- README: fuller project description (what it is, why client-side ML, key constraints) + mermaid diagram of the flow.
 
 ## §R RESEARCH
 
@@ -35,10 +36,11 @@ R2|2022 NAICS Descriptions xlsx confirmed (T15): cols Code\|Title\|Description, 
 - file: `public/naics-hierarchy.json` — code→node tree, node = `{title, definition?, examples?[], children}`. `definition`/`examples` optional — only codes with a Census descriptions-file entry carry them (§R2).
 - script: `scripts/build-model.*` — fits BeaconModel via BEACON submodule, exports params → `naics-model.json`. manual invoke, ⊥ CI.
 - submodule: `beacon` — BEACON census repo (sklearn pipeline + training data + possible NAICS structure data).
-- ui: top of page → "How does it work?" anchor link → in-page section, diagram + text (§V11).
+- ui: page, below search form → "💡 How does it work?" link → README section on GitHub (external, ⊥ in-page anchor/diagram).
 - workflow: `.github/workflows/deploy.yml` — build + publish `dist/` to GitHub Pages on push to `main`.
 - deployed URL: https://krcourville.github.io/naics-code-resolver/
-- ui: page header bar (title + GitHub octocat icon, right-aligned) → link to GitHub repo https://github.com/krcourville/naics-code-resolver
+- ui: page header bar (title, links row below: Cajun Code Monkey logo + "A Cajun Code Monkey project" → https://cajuncodemonkey.com/, GitHub octocat icon + repo name text "naics-code-resolver" → https://github.com/krcourville/naics-code-resolver)
+- file: `public/cajun-code-monkey.png` — Cajun Code Monkey symbol logo, tightly-cropped/transparent bg (favicon-source variant, ⊥ padded "PNG Logo Files" variant — that one has near-white non-transparent margin, visually undersized vs GitHub icon at matched box size), used in header link.
 
 ## §V INVARIANTS
 
@@ -79,6 +81,17 @@ T19|x|write "How does it work?" section (diagram + text) on main page, linked vi
 T20|x|README: link deployed GitHub Pages URL|-
 T21|x|add title header bar w/ GitHub octocat icon link to repo|I.ui
 T22|x|add MIT LICENSE file + package.json license field|-
+T23|x|expand README: fuller project description + mermaid diagram of flow, add "How does it work?" section|-
+T24|x|remove diagram + "How does it work?" section from deployed page, point link → README section instead|I.ui,T19
+T25|x|add "Product by Cajun Code Monkey" link next to GitHub icon in header|I.ui,T21
+T26|x|add Cajun Code Monkey symbol logo image to that link|I.ui,T25
+T27|x|header: title stacks above links row (was crowding/wrapping title), bump logo/icon size|I.ui,T21
+T28|x|reword CCM link text → "A Cajun Code Monkey project", add repo name text next to GitHub icon|I.ui,T25
+T29|x|swap logo asset for tightly-cropped transparent variant (padded PNG made icon look undersized/mismatched gap vs GitHub icon)|I.ui,T26
+T30|x|split intro line: description standalone, "How does it work?" moved below search form as own link w/ emoji|I.ui,T24
+T31|x|global `a` styling: no underline, no default `:visited` purple, consistent accent/text color per context|-
+T32|x|reword intro line, playful tone: "What does your business do? Type it below — we'll figure out the code."|I.ui
+T33|x|whitespace: widen gap header→intro text, tighten gap search form→"How does it work?" link|I.ui
 
 ## §B BUGS
 
