@@ -51,7 +51,7 @@ V4: model/hierarchy load ! block text input.
 V5: submit before load done → await load, then infer — ⊥ error/drop request.
 V6: TS-ported inference ! match Python BeaconModel output (top-N codes + scores, within tolerance) for oracle test set.
 V7: `naics-model.json` gzip size ! exceed 10MB (static-hosting budget).
-V8: result display ! show confidence numeric[0,1] & text label (high|medium|low) together.
+V8: result display ! show confidence numeric[0,1] & text label (high|medium|low) together, ? emoji indicator (🟢/🟡/🔴) per band.
 V9: Q&A offered (§V2) → first present model's own top-N candidates (title+code, score>0) as picks, ⊥ full hierarchy root browse. picking a candidate → resolved (§V3) if leaf, else hierarchy drill-down continues from that candidate's branch. no candidates match (user rejects) → fall back to full hierarchy root browse.
 V10: code missing definition/examples in hierarchy data → UI ! error/crash/blank — falls back to title-only display.
 V11: `vp build` output (`dist/index.html` + asset refs) ! resolve correctly under `/naics-code-resolver/` base path — no root-relative asset breaks under GitHub Pages project-site subpath.
@@ -92,6 +92,7 @@ T30|x|split intro line: description standalone, "How does it work?" moved below 
 T31|x|global `a` styling: no underline, no default `:visited` purple, consistent accent/text color per context|-
 T32|x|reword intro line, playful tone: "What does your business do? Type it below — we'll figure out the code."|I.ui
 T33|x|whitespace: widen gap header→intro text, tighten gap search form→"How does it work?" link|I.ui
+T34|x|add emoji indicator (🟢/🟡/🔴) to confidence display, banded on label|V8
 
 ## §B BUGS
 

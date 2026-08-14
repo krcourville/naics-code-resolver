@@ -48,6 +48,8 @@ function snippet(text: string, max = 160): string {
   return text.length > max ? `${text.slice(0, max).trimEnd()}…` : text;
 }
 
+const CONFIDENCE_EMOJI: Record<string, string> = { high: "🟢", medium: "🟡", low: "🔴" };
+
 function renderResult(
   code: string,
   hierarchy: HierarchyTree,
@@ -61,7 +63,7 @@ function renderResult(
   resultEl.innerHTML = `
     <p class="code">${code}</p>
     <p class="title">${title}</p>
-    <p class="confidence">confidence: ${score.toFixed(2)} (${label})</p>
+    <p class="confidence">${CONFIDENCE_EMOJI[label] ?? ""} confidence: ${score.toFixed(2)} (${label})</p>
     ${node?.definition ? `<p class="definition">${node.definition}</p>` : ""}
     ${node?.examples?.length ? `<ul class="examples">${node.examples.map((e) => `<li>${e}</li>`).join("")}</ul>` : ""}
   `;
