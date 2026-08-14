@@ -73,7 +73,7 @@ T14|x|fix Q&A entry point: seed picks from model top-N candidates instead of hie
 T15|x|source/fetch Census 2022 NAICS Descriptions (definition + illustrative examples), verify §R2, merge into naics-hierarchy.json|R2
 T16|x|surface definition + examples in result panel & Q&A candidate picks, graceful fallback when absent|T15,T9,T14,V10
 T17|x|set Vite `base: '/naics-code-resolver/'` for GitHub Pages project site|V11
-T18|.|add `.github/workflows/deploy.yml` — build + deploy to GitHub Pages on push to main|V11
+T18|x|add `.github/workflows/deploy.yml` — build + deploy to GitHub Pages on push to main|V11
 T19|.|write "How does it work?" section (diagram + text) on main page, linked via anchor|I.ui
 T20|.|README: link deployed GitHub Pages URL|-
 
