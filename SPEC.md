@@ -39,6 +39,7 @@ V2: confidence <.70 | top-2 scores within .10 → clarifying Q&A offered before 
 V3: final displayed code ! valid 6-digit NAICS code.
 V4: model/hierarchy load ! block text input.
 V5: submit before load done → await load, then infer — ⊥ error/drop request.
+V6: TS-ported inference ! match Python BeaconModel output (top-N codes + scores, within tolerance) for oracle test set.
 
 ## §T TASKS
 
@@ -46,13 +47,14 @@ id|status|task|cites
 T1|x|add BEACON repo as git submodule|-
 T2|x|write model export script: fit BeaconModel, export fitted dictionaries/weights/sector params → naics-model.json|I.submodule
 T3|x|source/verify NAICS hierarchy structure data → naics-hierarchy.json|-
-T4|.|build async model+hierarchy loader, non-blocking|V4,V5
-T5|.|port BeaconModel predict_proba logic to TS → top-N codes + scores|V1
-T6|.|impl confidence banding + text label + top-2 margin check|V2
-T7|.|impl NAICS hierarchy drill-down clarifying-question UI|V2
-T8|.|impl main page: input → submit → result/Q&A flow|I.ui
-T9|.|curate business-description test-case list|-
-T10|.|Playwright test suite over test-case list, tune confidence bands|T9,V2
+T4|x|port BeaconModel clean_text/stem/n-gram/scoring logic to TS → predict_proba equivalent, top-N codes+scores|V1
+T5|.|verify TS port parity vs Python BeaconModel — same inputs → same top-N codes/scores (tolerance). oracle = beacon/beacon_example.py + beacon_example_output.txt (22 example descriptions, restaurant probs, dealer top10)|T4,V6
+T6|.|build async model+hierarchy loader, non-blocking|V4,V5
+T7|.|impl confidence banding + text label + top-2 margin check|V2
+T8|.|impl NAICS hierarchy drill-down clarifying-question UI|V2
+T9|.|impl main page: input → submit → result/Q&A flow|I.ui
+T10|.|curate business-description test-case list|-
+T11|.|Playwright test suite over test-case list, tune confidence bands|T10,V2
 
 ## §B BUGS
 

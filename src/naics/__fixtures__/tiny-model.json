@@ -1,0 +1,149 @@
+{
+  "freq_thresh": 1,
+  "wt_umb": 0.6,
+  "wt_exact": 0.3,
+  "naics": ["111110", "111150", "445110", "445120"],
+  "sectors": ["11", "44"],
+  "sample_sizes": { "00": 8, "11": 4, "44": 4 },
+  "naics_indices": {
+    "00": { "11": 0, "44": 1 },
+    "11": { "111110": 0, "111150": 1 },
+    "44": { "445110": 0, "445120": 1 }
+  },
+  "dict_ncombs_props": {
+    "00": {
+      "conveni": [0.0, 1.0],
+      "conveni_gas": [0.0, 1.0],
+      "conveni_gas_station": [0.0, 1.0],
+      "conveni_gas_store": [0.0, 1.0],
+      "conveni_station": [0.0, 1.0],
+      "conveni_station_store": [0.0, 1.0],
+      "conveni_store": [0.0, 1.0],
+      "corn": [1.0, 0.0],
+      "corn_farm": [1.0, 0.0],
+      "farm": [1.0, 0.0],
+      "farm_soybean": [1.0, 0.0],
+      "farm_wheat": [1.0, 0.0],
+      "gas": [0.0, 1.0],
+      "gas_station": [0.0, 1.0],
+      "gas_station_store": [0.0, 1.0],
+      "gas_store": [0.0, 1.0],
+      "groceri": [0.0, 1.0],
+      "groceri_store": [0.0, 1.0],
+      "soybean": [1.0, 0.0],
+      "station": [0.0, 1.0],
+      "station_store": [0.0, 1.0],
+      "store": [0.0, 1.0],
+      "wheat": [1.0, 0.0]
+    },
+    "11": {
+      "corn": [0.5, 0.5],
+      "corn_farm": [0.5, 0.5],
+      "farm": [0.5, 0.5],
+      "farm_soybean": [1.0, 0.0],
+      "farm_wheat": [0.0, 1.0],
+      "soybean": [1.0, 0.0],
+      "wheat": [0.0, 1.0]
+    },
+    "44": {
+      "conveni": [0.0, 1.0],
+      "conveni_gas": [0.0, 1.0],
+      "conveni_gas_station": [0.0, 1.0],
+      "conveni_gas_store": [0.0, 1.0],
+      "conveni_station": [0.0, 1.0],
+      "conveni_station_store": [0.0, 1.0],
+      "conveni_store": [0.0, 1.0],
+      "gas": [0.0, 1.0],
+      "gas_station": [0.0, 1.0],
+      "gas_station_store": [0.0, 1.0],
+      "gas_store": [0.0, 1.0],
+      "groceri": [1.0, 0.0],
+      "groceri_store": [1.0, 0.0],
+      "station": [0.0, 1.0],
+      "station_store": [0.0, 1.0],
+      "store": [0.5, 0.5]
+    }
+  },
+  "dict_ncombs_weights": {
+    "00": {
+      "conveni": 1.0,
+      "conveni_gas": 1.0,
+      "conveni_gas_station": 1.0,
+      "conveni_gas_store": 1.0,
+      "conveni_station": 1.0,
+      "conveni_station_store": 1.0,
+      "conveni_store": 1.0,
+      "corn": 1.0,
+      "corn_farm": 1.0,
+      "farm": 1.0,
+      "farm_soybean": 1.0,
+      "farm_wheat": 1.0,
+      "gas": 1.0,
+      "gas_station": 1.0,
+      "gas_station_store": 1.0,
+      "gas_store": 1.0,
+      "groceri": 1.0,
+      "groceri_store": 1.0,
+      "soybean": 1.0,
+      "station": 1.0,
+      "station_store": 1.0,
+      "store": 1.0,
+      "wheat": 1.0
+    },
+    "11": {
+      "corn": 0.0001,
+      "corn_farm": 0.0001,
+      "farm": 0.0001,
+      "farm_soybean": 1.0,
+      "farm_wheat": 1.0,
+      "soybean": 1.0,
+      "wheat": 1.0
+    },
+    "44": {
+      "conveni": 1.0,
+      "conveni_gas": 1.0,
+      "conveni_gas_station": 1.0,
+      "conveni_gas_store": 1.0,
+      "conveni_station": 1.0,
+      "conveni_station_store": 1.0,
+      "conveni_store": 1.0,
+      "gas": 1.0,
+      "gas_station": 1.0,
+      "gas_station_store": 1.0,
+      "gas_store": 1.0,
+      "groceri": 1.0,
+      "groceri_store": 1.0,
+      "station": 1.0,
+      "station_store": 1.0,
+      "store": 0.0001
+    }
+  },
+  "dict_ems_props": {
+    "00": {
+      "conveni_gas_station_store": [0.0, 1.0],
+      "conveni_store": [0.0, 1.0],
+      "corn_farm": [1.0, 0.0],
+      "farm_soybean": [1.0, 0.0],
+      "farm_wheat": [1.0, 0.0],
+      "groceri_store": [0.0, 1.0]
+    },
+    "11": { "corn_farm": [0.5, 0.5], "farm_soybean": [1.0, 0.0], "farm_wheat": [0.0, 1.0] },
+    "44": {
+      "conveni_gas_station_store": [0.0, 1.0],
+      "conveni_store": [0.0, 1.0],
+      "groceri_store": [1.0, 0.0]
+    }
+  },
+  "dict_ems_weights": {
+    "00": {
+      "conveni_gas_station_store": 1.0,
+      "conveni_store": 1.0,
+      "corn_farm": 1.0,
+      "farm_soybean": 1.0,
+      "farm_wheat": 1.0,
+      "groceri_store": 1.0
+    },
+    "11": { "corn_farm": 0.0001, "farm_soybean": 1.0, "farm_wheat": 1.0 },
+    "44": { "conveni_gas_station_store": 1.0, "conveni_store": 1.0, "groceri_store": 1.0 }
+  }
+}

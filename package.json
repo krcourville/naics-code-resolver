@@ -12,7 +12,8 @@
   "devDependencies": {
     "typescript": "~6.0.2",
     "vite": "catalog:",
-    "vite-plus": "catalog:"
+    "vite-plus": "catalog:",
+    "vitest": "^4.1.10"
   },
   "devEngines": {
     "packageManager": {
