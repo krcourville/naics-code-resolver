@@ -1,6 +1,8 @@
 import { defineConfig } from "vite-plus";
 
 export default defineConfig({
+  // GitHub Pages project site: served at /naics-code-resolver/, not root.
+  base: "/naics-code-resolver/",
   staged: {
     "*": "vp check --fix",
   },

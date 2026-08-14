@@ -22,9 +22,13 @@ async function fetchJson<T>(url: string): Promise<T> {
  */
 export function loadNaics(): Promise<LoadedNaics> {
   loadPromise ??= (async () => {
+    // import.meta.env.BASE_URL (§V11): public/ assets are absolute paths at
+    // dev-server root but must resolve under Vite's `base` in production
+    // (GitHub Pages project site serves from /naics-code-resolver/, not /).
+    const base = import.meta.env.BASE_URL;
     const [params, hierarchy] = await Promise.all([
-      fetchJson<BeaconParams>("/naics-model.json"),
-      fetchJson<HierarchyTree>("/naics-hierarchy.json"),
+      fetchJson<BeaconParams>(`${base}naics-model.json`),
+      fetchJson<HierarchyTree>(`${base}naics-hierarchy.json`),
     ]);
     return { model: new BeaconModel(params), titles: flattenHierarchy(hierarchy), hierarchy };
   })();

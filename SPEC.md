@@ -18,6 +18,9 @@ static page: free-text business description → client-side ONNX inference → 6
 - automated testing via Playwright, driven off curated business-description test-case list.
 - ⊥ accounts, ⊥ history, ⊥ analytics, ⊥ multi-language, ⊥ offline/PWA, ⊥ server-side logging.
 - ? exact confidence thresholds provisional — may shift after Playwright test runs.
+- deployed via GitHub Pages, project site (not custom domain) → served at `/naics-code-resolver/`, Vite `base` ! match.
+- deploy = GitHub Actions workflow, triggered on push to `main`: `vp build` → publish `dist/` to Pages. ⊥ manual deploy step.
+- "How does it work?" = same-page section (§C: single page, ⊥ router/multi-page) — text + diagram explaining client-side inference → confidence bands → Q&A flow. linked via in-page anchor from top of page.
 
 ## §R RESEARCH
 
@@ -32,6 +35,9 @@ R2|2022 NAICS Descriptions xlsx confirmed (T15): cols Code\|Title\|Description, 
 - file: `public/naics-hierarchy.json` — code→node tree, node = `{title, definition?, examples?[], children}`. `definition`/`examples` optional — only codes with a Census descriptions-file entry carry them (§R2).
 - script: `scripts/build-model.*` — fits BeaconModel via BEACON submodule, exports params → `naics-model.json`. manual invoke, ⊥ CI.
 - submodule: `beacon` — BEACON census repo (sklearn pipeline + training data + possible NAICS structure data).
+- ui: top of page → "How does it work?" anchor link → in-page section, diagram + text (§V11).
+- workflow: `.github/workflows/deploy.yml` — build + publish `dist/` to GitHub Pages on push to `main`.
+- deployed URL: https://krcourville.github.io/naics-code-resolver/
 
 ## §V INVARIANTS
 
@@ -45,6 +51,7 @@ V7: `naics-model.json` gzip size ! exceed 10MB (static-hosting budget).
 V8: result display ! show confidence numeric[0,1] & text label (high|medium|low) together.
 V9: Q&A offered (§V2) → first present model's own top-N candidates (title+code, score>0) as picks, ⊥ full hierarchy root browse. picking a candidate → resolved (§V3) if leaf, else hierarchy drill-down continues from that candidate's branch. no candidates match (user rejects) → fall back to full hierarchy root browse.
 V10: code missing definition/examples in hierarchy data → UI ! error/crash/blank — falls back to title-only display.
+V11: `vp build` output (`dist/index.html` + asset refs) ! resolve correctly under `/naics-code-resolver/` base path — no root-relative asset breaks under GitHub Pages project-site subpath.
 
 ## §T TASKS
 
@@ -65,6 +72,10 @@ T13|x|update TS BeaconModel port to read sparse naics-model.json format|T4,B2,T1
 T14|x|fix Q&A entry point: seed picks from model top-N candidates instead of hierarchy root|T8,T9,V9
 T15|x|source/fetch Census 2022 NAICS Descriptions (definition + illustrative examples), verify §R2, merge into naics-hierarchy.json|R2
 T16|x|surface definition + examples in result panel & Q&A candidate picks, graceful fallback when absent|T15,T9,T14,V10
+T17|x|set Vite `base: '/naics-code-resolver/'` for GitHub Pages project site|V11
+T18|.|add `.github/workflows/deploy.yml` — build + deploy to GitHub Pages on push to main|V11
+T19|.|write "How does it work?" section (diagram + text) on main page, linked via anchor|I.ui
+T20|.|README: link deployed GitHub Pages URL|-
 
 ## §B BUGS
 
