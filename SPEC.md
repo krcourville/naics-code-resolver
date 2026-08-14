@@ -52,7 +52,7 @@ T4|x|port BeaconModel clean_text/stem/n-gram/scoring logic to TS → predict_pro
 T5|x|verify TS port parity vs Python BeaconModel — same inputs → same top-N codes/scores (tolerance). oracle = beacon/beacon_example.py + beacon_example_output.txt (22 example descriptions, restaurant probs, dealer top10)|T4,T12,T13,V6
 T6|x|build async model+hierarchy loader, non-blocking|V4,V5
 T7|x|impl confidence banding + text label + top-2 margin check|V2
-T8|.|impl NAICS hierarchy drill-down clarifying-question UI|V2
+T8|x|impl NAICS hierarchy drill-down clarifying-question UI|V2
 T9|.|impl main page: input → submit → result/Q&A flow|I.ui
 T10|.|curate business-description test-case list|-
 T11|.|Playwright test suite over test-case list, tune confidence bands|T10,V2
