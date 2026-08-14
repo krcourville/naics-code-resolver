@@ -55,7 +55,7 @@ T6|x|build async model+hierarchy loader, non-blocking|V4,V5
 T7|x|impl confidence banding + text label + top-2 margin check|V2
 T8|x|impl NAICS hierarchy drill-down clarifying-question UI|V2
 T9|x|impl main page: input → submit → result/Q&A flow|I.ui
-T10|.|curate business-description test-case list|-
+T10|x|curate business-description test-case list|-
 T11|.|Playwright test suite over test-case list, tune confidence bands|T10,V2
 T12|x|rework naics-model.json export to sparse format (drop dense naics_indices arrays)|T2,B2,V7
 T13|x|update TS BeaconModel port to read sparse naics-model.json format|T4,B2,T12
