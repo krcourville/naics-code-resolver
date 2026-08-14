@@ -84,3 +84,32 @@ test("Q&A 'browse full hierarchy' falls back to root sectors", async ({ page }) 
   const optionCount = await page.locator("#naics-qa button[data-code]").count();
   expect(optionCount).toBeGreaterThan(10); // full hierarchy root, not the 2 candidates
 });
+
+// §V10: definition + illustrative examples shown when present (result panel and
+// Q&A candidate picks), and absence never crashes the UI.
+test("result panel shows definition + illustrative examples when present", async ({ page }) => {
+  const errors: string[] = [];
+  page.on("pageerror", (e) => errors.push(String(e)));
+
+  await page.goto("/");
+  await page.fill("#naics-input", "home health care");
+  await page.click("#naics-submit");
+  await expect(page.locator("#naics-result .code")).toHaveText("621610");
+  await expect(page.locator("#naics-result .definition")).toContainText(
+    "skilled nursing services in the home",
+  );
+  await expect(page.locator("#naics-result .examples li")).toHaveCount(4);
+  await expect(page.locator("#naics-result .examples")).toContainText(
+    "Visiting nurse associations",
+  );
+  expect(errors).toEqual([]);
+});
+
+test("Q&A candidate picks show a definition snippet to help choose", async ({ page }) => {
+  await page.goto("/");
+  await page.fill("#naics-input", "hvac");
+  await page.click("#naics-submit");
+  await expect(page.locator("#naics-qa")).toBeVisible();
+  const defCount = await page.locator("#naics-qa button .definition").count();
+  expect(defCount).toBeGreaterThan(0);
+});

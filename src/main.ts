@@ -1,7 +1,7 @@
 import "./style.css";
 import { loadNaics } from "./naics/loader.ts";
 import { classifyConfidence } from "./naics/confidence.ts";
-import { drilldownOptions, isResolved } from "./naics/drilldown.ts";
+import { drilldownOptions, getNode, isResolved } from "./naics/drilldown.ts";
 import type { HierarchyTree } from "./naics/hierarchy.ts";
 import type { NaicsScore } from "./naics/beacon-model.ts";
 
@@ -27,13 +27,27 @@ const qaEl = document.querySelector<HTMLDivElement>("#naics-qa")!;
 // this same in-flight promise if it lands early (§V5, loader dedupes it).
 const loaded = loadNaics();
 
-function renderResult(code: string, titles: Map<string, string>, score: number, label: string) {
-  const title = titles.get(code) ?? "";
+// §V10: definition/examples optional — missing ones just don't render, never a blank/crash.
+function snippet(text: string, max = 160): string {
+  return text.length > max ? `${text.slice(0, max).trimEnd()}…` : text;
+}
+
+function renderResult(
+  code: string,
+  hierarchy: HierarchyTree,
+  titles: Map<string, string>,
+  score: number,
+  label: string,
+) {
+  const node = getNode(hierarchy, code);
+  const title = node?.title ?? titles.get(code) ?? "";
   resultEl.hidden = false;
   resultEl.innerHTML = `
     <p class="code">${code}</p>
     <p class="title">${title}</p>
     <p class="confidence">confidence: ${score.toFixed(2)} (${label})</p>
+    ${node?.definition ? `<p class="definition">${node.definition}</p>` : ""}
+    ${node?.examples?.length ? `<ul class="examples">${node.examples.map((e) => `<li>${e}</li>`).join("")}</ul>` : ""}
   `;
 }
 
@@ -52,7 +66,7 @@ function renderHierarchyQA(
     btn.addEventListener("click", () => {
       const nextCode = btn.dataset.code!;
       if (isResolved(hierarchy, nextCode)) {
-        renderResult(nextCode, titles, 1, "high"); // §V3: confirmed leaf is a valid 6-digit code
+        renderResult(nextCode, hierarchy, titles, 1, "high"); // §V3: confirmed leaf is a valid 6-digit code
         qaEl.hidden = true;
       } else {
         renderHierarchyQA(hierarchy, titles, nextCode);
@@ -62,15 +76,18 @@ function renderHierarchyQA(
 }
 
 // §V9: Q&A first offers the model's own top-N candidates, not the full hierarchy.
+// Candidate picks show a definition snippet (§V10: absent -> just the title) to help choose.
 function renderQA(candidates: NaicsScore[], hierarchy: HierarchyTree, titles: Map<string, string>) {
   qaEl.hidden = false;
   qaEl.innerHTML = `
     <p>Not quite right? Did you mean:</p>
     <ul>${candidates
-      .map(
-        (c) =>
-          `<li><button type="button" data-code="${c.naics}">${titles.get(c.naics) ?? c.naics}</button></li>`,
-      )
+      .map((c) => {
+        const node = getNode(hierarchy, c.naics);
+        const title = node?.title ?? titles.get(c.naics) ?? c.naics;
+        const def = node?.definition ? `<p class="definition">${snippet(node.definition)}</p>` : "";
+        return `<li><button type="button" data-code="${c.naics}">${title}${def}</button></li>`;
+      })
       .join("")}</ul>
     <button type="button" id="naics-qa-browse">None of these — browse full hierarchy</button>
   `;
@@ -81,6 +98,7 @@ function renderQA(candidates: NaicsScore[], hierarchy: HierarchyTree, titles: Ma
         const candidate = candidates.find((c) => c.naics === code)!;
         renderResult(
           code,
+          hierarchy,
           titles,
           candidate.score,
           classifyConfidence(candidate.score, undefined).label,
@@ -106,7 +124,7 @@ async function handleSubmit(text: string) {
     return;
   }
   const { label, offerQA } = classifyConfidence(top[0].score, top[1]?.score);
-  renderResult(top[0].naics, titles, top[0].score, label); // §V2/§V8: result always shown first
+  renderResult(top[0].naics, hierarchy, titles, top[0].score, label); // §V2/§V8: result always shown first
   if (offerQA) renderQA(top, hierarchy, titles);
 }
 

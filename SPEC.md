@@ -64,7 +64,7 @@ T12|x|rework naics-model.json export to sparse format (drop dense naics_indices 
 T13|x|update TS BeaconModel port to read sparse naics-model.json format|T4,B2,T12
 T14|x|fix Q&A entry point: seed picks from model top-N candidates instead of hierarchy root|T8,T9,V9
 T15|x|source/fetch Census 2022 NAICS Descriptions (definition + illustrative examples), verify §R2, merge into naics-hierarchy.json|R2
-T16|.|surface definition + examples in result panel & Q&A candidate picks, graceful fallback when absent|T15,T9,T14,V10
+T16|x|surface definition + examples in result panel & Q&A candidate picks, graceful fallback when absent|T15,T9,T14,V10
 
 ## §B BUGS
 
