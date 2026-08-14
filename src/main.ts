@@ -3,6 +3,7 @@ import { loadNaics } from "./naics/loader.ts";
 import { classifyConfidence } from "./naics/confidence.ts";
 import { drilldownOptions, isResolved } from "./naics/drilldown.ts";
 import type { HierarchyTree } from "./naics/hierarchy.ts";
+import type { NaicsScore } from "./naics/beacon-model.ts";
 
 document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
 <section id="resolver">
@@ -37,11 +38,14 @@ function renderResult(code: string, titles: Map<string, string>, score: number, 
 }
 
 // §C: clarifying Q&A = static hierarchy drill-down only, ⊥ model/LLM-generated questions.
-function renderQA(hierarchy: HierarchyTree, titles: Map<string, string>, code: string | null) {
+function renderHierarchyQA(
+  hierarchy: HierarchyTree,
+  titles: Map<string, string>,
+  code: string | null,
+) {
   const options = drilldownOptions(hierarchy, code);
-  qaEl.hidden = false;
   qaEl.innerHTML = `
-    <p>Not quite right? Narrow it down:</p>
+    <p>Narrow it down:</p>
     <ul>${options.map((o) => `<li><button type="button" data-code="${o.code}">${o.title}</button></li>`).join("")}</ul>
   `;
   for (const btn of qaEl.querySelectorAll<HTMLButtonElement>("button[data-code]")) {
@@ -51,10 +55,45 @@ function renderQA(hierarchy: HierarchyTree, titles: Map<string, string>, code: s
         renderResult(nextCode, titles, 1, "high"); // §V3: confirmed leaf is a valid 6-digit code
         qaEl.hidden = true;
       } else {
-        renderQA(hierarchy, titles, nextCode);
+        renderHierarchyQA(hierarchy, titles, nextCode);
       }
     });
   }
+}
+
+// §V9: Q&A first offers the model's own top-N candidates, not the full hierarchy.
+function renderQA(candidates: NaicsScore[], hierarchy: HierarchyTree, titles: Map<string, string>) {
+  qaEl.hidden = false;
+  qaEl.innerHTML = `
+    <p>Not quite right? Did you mean:</p>
+    <ul>${candidates
+      .map(
+        (c) =>
+          `<li><button type="button" data-code="${c.naics}">${titles.get(c.naics) ?? c.naics}</button></li>`,
+      )
+      .join("")}</ul>
+    <button type="button" id="naics-qa-browse">None of these — browse full hierarchy</button>
+  `;
+  for (const btn of qaEl.querySelectorAll<HTMLButtonElement>("button[data-code]")) {
+    btn.addEventListener("click", () => {
+      const code = btn.dataset.code!;
+      if (isResolved(hierarchy, code)) {
+        const candidate = candidates.find((c) => c.naics === code)!;
+        renderResult(
+          code,
+          titles,
+          candidate.score,
+          classifyConfidence(candidate.score, undefined).label,
+        );
+        qaEl.hidden = true;
+      } else {
+        renderHierarchyQA(hierarchy, titles, code);
+      }
+    });
+  }
+  qaEl.querySelector<HTMLButtonElement>("#naics-qa-browse")!.addEventListener("click", () => {
+    renderHierarchyQA(hierarchy, titles, null);
+  });
 }
 
 async function handleSubmit(text: string) {
@@ -68,7 +107,7 @@ async function handleSubmit(text: string) {
   }
   const { label, offerQA } = classifyConfidence(top[0].score, top[1]?.score);
   renderResult(top[0].naics, titles, top[0].score, label); // §V2/§V8: result always shown first
-  if (offerQA) renderQA(hierarchy, titles, null);
+  if (offerQA) renderQA(top, hierarchy, titles);
 }
 
 form.addEventListener("submit", (event) => {

@@ -42,6 +42,7 @@ V5: submit before load done → await load, then infer — ⊥ error/drop reques
 V6: TS-ported inference ! match Python BeaconModel output (top-N codes + scores, within tolerance) for oracle test set.
 V7: `naics-model.json` gzip size ! exceed 10MB (static-hosting budget).
 V8: result display ! show confidence numeric[0,1] & text label (high|medium|low) together.
+V9: Q&A offered (§V2) → first present model's own top-N candidates (title+code, score>0) as picks, ⊥ full hierarchy root browse. picking a candidate → resolved (§V3) if leaf, else hierarchy drill-down continues from that candidate's branch. no candidates match (user rejects) → fall back to full hierarchy root browse.
 
 ## §T TASKS
 
@@ -59,9 +60,11 @@ T10|x|curate business-description test-case list|-
 T11|x|Playwright test suite over test-case list, tune confidence bands|T10,V2
 T12|x|rework naics-model.json export to sparse format (drop dense naics_indices arrays)|T2,B2,V7
 T13|x|update TS BeaconModel port to read sparse naics-model.json format|T4,B2,T12
+T14|x|fix Q&A entry point: seed picks from model top-N candidates instead of hierarchy root|T8,T9,V9
 
 ## §B BUGS
 
 id|date|cause|fix
 B1|2026-08-14|BeaconModel = custom sklearn BaseEstimator (hand-rolled clean_text/stem/n-gram dict/purity scoring), ⊥ standard Pipeline → skl2onnx ⊥ converter, ONNX export infeasible|ported BEACON fit/predict logic to TS, artifact = naics-model.json not naics.onnx (§C,§I,T2,T5)
 B2|2026-08-14|naics-model.json dense per-sector float arrays ~98.8% zero → 391MB real-data artifact, unshippable|sparse {naicsCode:prop} encoding + rounding + compact JSON → 35.5MB/5.5MB gzip (§C,§I,V7,T12,T13)
+B3|2026-08-14|Q&A hardcoded to start hierarchy drill-down at root (src/main.ts renderQA call), discarding model's own top-N candidates → ambiguous input ("hvac": 238220 .65, 423730 .35) forces full 20-sector browse instead of showing the 2 codes already found|V9,T14

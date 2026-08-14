@@ -39,6 +39,7 @@ export const TEST_CASES: TestCase[] = [
   { description: "contractor", category: "ambiguous" },
   { description: "online store", category: "ambiguous" },
   { description: "cleaning service", category: "ambiguous" },
+  { description: "hvac", category: "ambiguous" },
 
   // edge: empty/unmapped input, must not crash the inference or UI
   { description: "gobbledygook", category: "edge" },
