@@ -93,11 +93,36 @@ That budget doesn't generalize to ML in the browser broadly:
   on page load" is reasonable — those need explicit user opt-in, caching
   (Cache API/OPFS), and a loading UX that admits it's downloading a real
   model.
-- **Other considerations:** client CPU/battery cost of inference (this
-  model's n-gram lookup is cheap; a neural net forward pass is not),
-  cache/versioning story for updating the artifact, and whether the
-  client-side privacy win (nothing leaves the machine) is worth the
-  page-weight cost at all for the use case.
+- **Exposure cuts both ways.** Whatever's fetched on page load sits in the
+  browser cache and network tab, fully downloadable by anyone who opens the
+  page — there's no server boundary hiding it. That's the privacy win
+  (nothing leaves the machine) and the IP cost (nothing stays hidden,
+  either) at the same time. Fine here: BEACON is CC0/public domain, nothing
+  to protect. For a proprietary model, "runs client-side" and "keeps the
+  model confidential" are in direct tension.
+- **Backend-shaped needs don't go away.** Client-side inference has no
+  server to log predictions/confidence/corrections through, so there's no
+  natural point to capture data for a retraining or monitoring loop.
+  Several apps/services needing the same inference points toward one
+  shared backend, not N copies of the model re-shipped into N clients.
+  Updating the artifact still needs a cache/versioning story even without
+  a server. Any of these — observability, multiple consumers, artifact
+  versioning — can outweigh the "no backend" win on its own. Client CPU/
+  battery cost of inference also scales with model complexity (this
+  model's n-gram lookup is cheap; a neural net forward pass is not).
+
+## Improvement ideas
+
+- **Synonym/hypernym expansion at fit time.** Widen the n-gram dictionary
+  with a WordNet-style pass when the model is fit, so vocabulary mismatches
+  ("fix cars" vs. "automotive repair") get caught without touching the
+  runtime or the bundle size.
+- **Semantic similarity via a small embedding model.** A quantized
+  sentence-transformer (e.g. via transformers.js) running client-side,
+  blended with the existing n-gram score, would catch meaning matches that
+  share no vocabulary at all. Bigger lift than synonym expansion — pulls
+  the bundle-size/practicality tradeoff above back into play, since a real
+  embedding model is heavier and slower than BEACON's sparse dictionary.
 
 ## Getting Started
 
