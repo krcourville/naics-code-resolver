@@ -60,7 +60,7 @@ test.afterAll(() => {
 test("Q&A offers model candidates via decision tree, not the full hierarchy root", async ({
   page,
 }) => {
-  await page.goto("/");
+  await page.goto("/?details=tree");
   await page.fill("#naics-input", "hvac");
   await page.click("#naics-submit");
   await expect(page.locator("#naics-qa")).toBeVisible();
@@ -84,7 +84,7 @@ test("Q&A offers model candidates via decision tree, not the full hierarchy root
 });
 
 test("Q&A 'browse full hierarchy' falls back to root sectors", async ({ page }) => {
-  await page.goto("/");
+  await page.goto("/?details=tree");
   await page.fill("#naics-input", "hvac");
   await page.click("#naics-submit");
   await page.click("#naics-qa-browse");
@@ -113,7 +113,7 @@ test("result panel shows definition + illustrative examples when present", async
 });
 
 test("Q&A candidate picks show a definition snippet to help choose", async ({ page }) => {
-  await page.goto("/");
+  await page.goto("/?details=tree");
   await page.fill("#naics-input", "hvac");
   await page.click("#naics-submit");
   await expect(page.locator("#naics-qa")).toBeVisible();

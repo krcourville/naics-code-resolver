@@ -4,13 +4,13 @@
   --bg: #fff;
   --border: #e5e4e7;
   --code-bg: #f4f3ec;
-  --accent: #aa3bff;
-  --accent-bg: rgba(170, 59, 255, 0.1);
-  --accent-border: rgba(170, 59, 255, 0.5);
+  --accent: #f27b57;
+  --accent-bg: rgba(242, 123, 87, 0.12);
+  --accent-border: rgba(242, 123, 87, 0.5);
   --shadow: rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
 
   --sans: system-ui, "Segoe UI", Roboto, sans-serif;
-  --heading: system-ui, "Segoe UI", Roboto, sans-serif;
+  --heading: "M PLUS Rounded 1C", system-ui, "Segoe UI", Roboto, sans-serif;
   --mono: ui-monospace, Consolas, monospace;
 
   font: 18px/145% var(--sans);
@@ -35,9 +35,9 @@
     --bg: #16171d;
     --border: #2e303a;
     --code-bg: #1f2028;
-    --accent: #c084fc;
-    --accent-bg: rgba(192, 132, 252, 0.15);
-    --accent-border: rgba(192, 132, 252, 0.5);
+    --accent: #ffab91;
+    --accent-bg: rgba(255, 171, 145, 0.15);
+    --accent-border: rgba(255, 171, 145, 0.5);
     --shadow: rgba(0, 0, 0, 0.4) 0 10px 15px -3px, rgba(0, 0, 0, 0.25) 0 4px 6px -2px;
   }
 }
@@ -108,6 +108,42 @@ h1 {
 
 p {
   margin: 0;
+}
+
+#settings-panel {
+  align-self: flex-start;
+  font-size: 14px;
+
+  summary {
+    cursor: pointer;
+    color: var(--text);
+    &:hover {
+      color: var(--text-h);
+    }
+  }
+
+  .settings-fields {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+    margin-top: 8px;
+    padding: 12px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--bg);
+    box-shadow: var(--shadow);
+  }
+
+  select,
+  input[type="number"] {
+    font: inherit;
+    padding: 4px 8px;
+    border-radius: 4px;
+    border: 1px solid var(--border);
+    color: var(--text-h);
+    background: var(--code-bg);
+  }
 }
 
 code {
@@ -288,6 +324,7 @@ code {
 
   .qa-heading {
     margin: 0;
+    font-family: var(--heading);
     font-size: 18px;
     font-weight: 600;
     color: var(--text-h);
@@ -383,4 +420,34 @@ code {
   #naics-qa-up {
     margin-top: 8px;
   }
+
+  .qa-list-row {
+    .qa-list-line1 {
+      display: flex;
+      align-items: baseline;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .qa-cand-title {
+      color: var(--text);
+    }
+
+    .definition {
+      margin: 6px 0 0;
+      font-size: 14px;
+      font-weight: normal;
+      color: var(--text);
+    }
+  }
+}
+
+.qa-list-showdef {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 8px 0 4px;
+  font-size: 14px;
+  color: var(--text);
+  cursor: pointer;
 }

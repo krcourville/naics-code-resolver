@@ -22,6 +22,10 @@ static page: free-text business description → client-side ONNX inference → 6
 - deploy = GitHub Actions workflow, triggered on push to `main`: `vp build` → publish `dist/` to Pages. ⊥ manual deploy step.
 - "How does it work?" = README section, ⊥ deployed page (single page stays lean, no diagram/explainer bloat). README section carries description + mermaid diagram (client-side inference → confidence bands → Q&A flow). deployed page link → README section, ⊥ in-page anchor.
 - README: fuller project description (what it is, why client-side ML, key constraints) + mermaid diagram of the flow.
+- search text state bound to URL query param `term` (shareable URLs).
+- settings (detailsMode, alwaysShowDefinition, floor) driven by query params, persisted localStorage. load order: query param > localStorage > default (§V15). detailsMode default = list (plain list, ⊥ decision tree).
+- floor setting: number [0,1], default 0.
+- visual theme = Cajun Code Monkey brand palette (primary #F27B57/#D65C37 orange, #FFAA02/#DC8503 gold accent, neutrals #000000–#FFFFFF, tan/brown #F4C7AA/#D59A7C/#F7C5A0/#F9DBC9), replaces prior generic purple accent (#aa3bff). light+dark mode both derive from same brand hues. heading font = "M PLUS Rounded 1C" weight 900 (Google Font).
 
 ## §R RESEARCH
 
@@ -29,6 +33,10 @@ id|fact|source
 R1|2022 NAICS Structure xlsx = flat depth-first outline, cols Change Indicator\|2022 NAICS Code\|2022 NAICS Title. levels by code digit-len: 2=sector,3=subsector,4=industry group,5=NAICS industry,6=national industry. 3 merged-sector range codes (31-33,44-45,48-49) match BeaconModel's `__get_sector()` merge exactly. title has trailing "T" (trilateral-agreement marker) appended directly, no separator — strip when preceded by lowercase. 1012 six-digit codes for 2022 vintage, matches `beacon/create_example_data_output.txt` reported count.|https://www.census.gov/naics/2022NAICS/2022_NAICS_Structure.xlsx
 R2|2022 NAICS Descriptions xlsx confirmed (T15): cols Code\|Title\|Description, 2125 rows, entries at every hierarchy level not just 6-digit (sectors down to national industries). one Description cell per code jams definition + "Illustrative Examples:" list + "Cross-References." into free text, no separate columns — split on those literal markers. 5-digit codes that alias a single 6-digit industry are stubs ("See industry description for XXXXXX.", 522 of 2125 rows) with no real content, skip them. 1603/2125 codes carry a real definition.|https://www.census.gov/naics/2022NAICS/2022_NAICS_Descriptions.xlsx
 R3|BEACON (submodule, source of ported logic) licensed CC0 1.0 Universal — public domain dedication, ⊥ attribution/copyleft req. US Census Bureau notes gov-employee code ⊥ subject to US copyright anyway. no conflict w/ this project's MIT license (T22,T36).|https://github.com/uscensusbureau/BEACON/blob/133ae64c177e863bf1149872720cad01b0699346/LICENSE.md
+R4|synonym-expansion hook already exists: `beacon.py` `__map_dict`/`__map()` (beacon/beacon.py:790-800) runs post-stem, pre-dictionary-build inside `clean_text()`. filling it w/ WordNet synonym→canonical-stem pairs needs zero new mechanism, zero runtime/bundle change — fit-time-only edit to scripts/build-model.py + beacon.py, output JSON schema unchanged. confirms README claim (untouched runtime/bundle size).|beacon/beacon.py:790-800 (local)
+R5|NLTK WordNet corpus = 10.7MB via `nltk.download("wordnet")`, Princeton license free research+commercial use w/ citation. pulled once @ build time only, ⊥ ships to browser — doesn't touch 5.9MB-gzip model artifact budget.|https://www.nltk.org/nltk_data/, https://wordnet.princeton.edu/license-and-commercial-use
+R6|WordNet polysemy = real risk: synsets conflate senses (bank=river vs finance), naive whole-word auto-merge into `__map_dict` → false-positive n-gram matches across unrelated NAICS sectors. known query-expansion pitfall, ⊥ solved by lookup alone — needs manual curation or per-domain sense filter. current `__map_dict` = 3 entries, all hand-picked, no bulk-mapping infra exists.|https://aclanthology.org/2016.gwc-1.17.pdf, https://arxiv.org/pdf/1108.4052
+R7|effort sizing (measured 2026-08-16): baseline dict = 542588 n-gram keys + 39348 exact-match keys / 20 sectors, 47MB raw / 5.9MB gzip model artifact. R4 shows infra cost trivial (<1 day script/dep change); real cost = curation+eval loop (pull synsets, hand-filter per R6, re-fit, re-run `beacon-model.parity.test.ts`), unbounded by vocab coverage chosen. ∴ start w/ narrow hand-vetted batch (10-50 pairs, same pattern as existing auto/automobil→car), not full WordNet dump.|synthesis of R4-R6, ⊥ independently sourced
 
 ## §I INTERFACES
 
@@ -42,6 +50,15 @@ R3|BEACON (submodule, source of ported logic) licensed CC0 1.0 Universal — pub
 - deployed URL: https://krcourville.github.io/naics-code-resolver/
 - ui: page header bar (title, links row below: Cajun Code Monkey logo + "A Cajun Code Monkey project" → https://cajuncodemonkey.com/, GitHub octocat icon + repo name text "naics-code-resolver (MIT)" → https://github.com/krcourville/naics-code-resolver)
 - file: `public/cajun-code-monkey.png` — Cajun Code Monkey symbol logo, tightly-cropped/transparent bg (favicon-source variant, ⊥ padded "PNG Logo Files" variant — that one has near-white non-transparent margin, visually undersized vs GitHub icon at matched box size), used in header link.
+- ui: gear/settings icon → settings panel: detailsMode select (list|tree), floor numeric input [0,1]. alwaysShowDefinition ⊥ in gear panel — lives as an inline "Show definitions" toggle atop the list view itself (§V17), same underlying setting/persistence.
+- url query param: `term` = search text.
+- url query param: `details` = `tree`|`list`.
+- url query param: `showDef` = `0`|`1`.
+- url query param: `floor` = `0`–`1` number string.
+- localStorage key `naics-settings` — JSON `{details, showDef, floor}`.
+- ui: plain list result view (detailsMode=list) — rows: code, title, confidence (§V8 format). row click → expand → definition (§V10 fallback applies).
+- asset src: `~/devp/cajun-code-monkey/assets/PDF Guideline.pdf` — brand colors + font spec (external ref, ⊥ copied into repo).
+- font: Google Font "M PLUS Rounded 1C" weight 900, used for h1 + heading text.
 
 ## §V INVARIANTS
 
@@ -59,6 +76,13 @@ V12: hierarchy drill-down UI = directory-style nav: breadcrumb trail (root → c
 V13: any resolved result (candidate pick or hierarchy leaf) ! offer a way back — "See other matches" reopens Q&A from the original search's model candidates, ⊥ dead end regardless of path taken to reach the result.
 V10: code missing definition/examples in hierarchy data → UI ! error/crash/blank — falls back to title-only display.
 V11: `vp build` output (`dist/index.html` + asset refs) ! resolve correctly under `/naics-code-resolver/` base path — no root-relative asset breaks under GitHub Pages project-site subpath.
+V15: settings load order ! query param > localStorage > default. any setting change → write-through to both query param & localStorage.
+V16: `term` query param present on load → prefills input, auto-runs search once model/hierarchy load done (§V5). successful submit → writes `term` via `history.replaceState` (⊥ pushState/history spam), ⊥ per-keystroke updates.
+V17: detailsMode=list (default) → Q&A/candidate presentation ! flat list (confidence+code+title), ⊥ decision tree (opt-in via detailsMode=tree). single-line row (confidence, code, title in order; title may wrap to further lines, ⊥ truncated) — entire row/card ! be the click target to select that code (⊥ separate "Select" button). ⊥ per-row expand control — one "Show definitions" checkbox above the whole list toggles every row's definition at once (= alwaysShowDefinition setting, write-through persisted same as gear-panel settings, §V15).
+V18: floor filters candidates w/ confidence < floor from Q&A/candidate pool (list & tree modes), applied AFTER §V2's band/offerQA decision (which always uses raw unfiltered top-2 scores) — floor narrows what's shown, ⊥ what triggers Q&A. floor ∈[0,1], default 0. out-of-range clamped. ⊥ affects primary result (§V2 still renders best guess). floor emptying the whole pool → Q&A falls back to full hierarchy browse (§V9), ⊥ blank list.
+V19: --accent/--accent-bg/--accent-border (light+dark) ! derive from Cajun Code Monkey palette (§C) — ⊥ prior arbitrary purple (#aa3bff removed).
+V20: h1 + heading text ! use "M PLUS Rounded 1C" 900, fallback → --sans stack if font fails load.
+V21: malformed/corrupt `naics-settings` localStorage JSON ! crash app — falls back to defaults, same as absent.
 
 ## §T TASKS
 
@@ -110,6 +134,15 @@ T40|x|"Find code" button was stretched full-height matching 2-row textarea → m
 T41|x|main content (#resolver) distinguished from page bg: tinted body bg + card (border/radius/shadow) around resolver section|I.ui
 T42|x|Q&A section ("Not quite right?"/"Narrow it down") given own tinted card, distinct from result panel + candidate rows above|I.ui
 T43|x|result panel was a dead end (selected candidate/leaf → stuck) → added "🔄 Not this one? Try again" reopening Q&A from original search candidates|V13
+T48|x|bind search term to `term` query param — load-time prefill+autosearch, typing→param sync|V16
+T49|x|settings module: schema + load order (query>localStorage>default) + write-through persist|V15
+T50|x|settings UI: gear icon + panel (detailsMode select, alwaysShowDefinition checkbox, floor input)|T49
+T51|x|plain list result view (code/title/confidence, click-to-expand definition), gated by detailsMode|V17,T50
+T52|x|wire alwaysShowDefinition to list/result default-expand behavior|V17,T50
+T53|x|floor filtering across candidate pool (list + decision tree)|V18,T50
+T54|x|Playwright: shareable URL (term+settings round-trip), floor filtering, tree vs list mode|T48,T51,T53
+T55|x|swap --accent/--accent-bg/--accent-border tokens (light+dark) → Cajun Code Monkey palette (#F27B57/#D65C37/#FFAA02/#DC8503)|V19
+T56|x|load "M PLUS Rounded 1C" 900 (Google Fonts) for --heading, apply to h1 + qa-heading|V20
 
 ## §B BUGS
 

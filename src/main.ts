@@ -8,11 +8,24 @@ import {
   isResolved,
   type DrillOption,
 } from "./naics/drilldown.ts";
+import { filterByFloor } from "./naics/floor.ts";
+import {
+  clampFloor,
+  loadSettings,
+  saveSettings,
+  type DetailsMode,
+  type Settings,
+} from "./naics/settings.ts";
 import type { HierarchyTree } from "./naics/hierarchy.ts";
 import type { NaicsScore } from "./naics/beacon-model.ts";
 
 // public/ assets need import.meta.env.BASE_URL prefix (§V11) — index.html-only rewrite doesn't reach JS-injected HTML.
 const base = import.meta.env.BASE_URL;
+
+const urlParams = new URLSearchParams(location.search);
+const initialTerm = urlParams.get("term") ?? "";
+let settings: Settings = loadSettings(urlParams);
+saveSettings(settings); // §V15: URL/localStorage always reflect the effective (merged) settings.
 
 document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
 <header id="site-header">
@@ -27,6 +40,18 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
       naics-code-resolver (MIT)
     </a>
   </div>
+  <details id="settings-panel">
+    <summary>⚙️ Settings</summary>
+    <div class="settings-fields">
+      <label for="setting-details">Result view</label>
+      <select id="setting-details">
+        <option value="list">Plain list</option>
+        <option value="tree">Decision tree</option>
+      </select>
+      <label for="setting-floor">Confidence floor (0–1)</label>
+      <input type="number" id="setting-floor" min="0" max="1" step="0.05" />
+    </div>
+  </details>
 </header>
 <section id="resolver">
   <p>What does your business do? Type it below — we'll figure out the code.</p>
@@ -48,6 +73,11 @@ const input = document.querySelector<HTMLTextAreaElement>("#naics-input")!;
 const clearBtn = document.querySelector<HTMLButtonElement>("#naics-clear")!;
 const resultEl = document.querySelector<HTMLDivElement>("#naics-result")!;
 const qaEl = document.querySelector<HTMLDivElement>("#naics-qa")!;
+const detailsSelect = document.querySelector<HTMLSelectElement>("#setting-details")!;
+const floorInput = document.querySelector<HTMLInputElement>("#setting-floor")!;
+
+detailsSelect.value = settings.details;
+floorInput.value = String(settings.floor);
 
 // Kicked off on mount, never awaited by input handling (§V4) — submit awaits
 // this same in-flight promise if it lands early (§V5, loader dedupes it).
@@ -61,6 +91,7 @@ let lastSearch: {
   candidates: NaicsScore[];
   hierarchy: HierarchyTree;
   titles: Map<string, string>;
+  offerQA: boolean;
 } | null = null;
 
 function renderResult(
@@ -94,6 +125,7 @@ function renderHierarchyQA(
   titles: Map<string, string>,
   path: DrillOption[],
 ) {
+  qaEl.hidden = false;
   const code = path.length ? path[path.length - 1].code : null;
   const options = drilldownOptions(hierarchy, code);
   const crumbs = [
@@ -184,7 +216,7 @@ function candidateCardHtml(
 }
 
 // §V9/§C: Q&A = model's own top-N candidates, narrowed via a decision tree built from where
-// their hierarchy paths diverge — one branching question at a time instead of a flat wall of
+// their hierarchy paths diverge, one branching question at a time instead of a flat wall of
 // text, ⊥ LLM-generated questions. Falls back to a flat candidate list once ≤1 candidate or no
 // further divergence remains. `stack` = decision history for breadcrumb + Up nav.
 function renderQAStep(
@@ -261,8 +293,86 @@ function renderQAStep(
   });
 }
 
+// §V17: plain-list alternative to the decision tree — fixed 2-line rows (never reflow across
+// breakpoints): line 1 = code + title, line 2 = confidence + "Select" button. Definitions are
+// governed by one "Show definitions" toggle above the whole list (§C alwaysShowDefinition),
+// not per row.
+function renderCandidateListQA(
+  candidates: NaicsScore[],
+  hierarchy: HierarchyTree,
+  titles: Map<string, string>,
+) {
+  qaEl.hidden = false;
+  const rows = candidates
+    .map((c) => {
+      const node = getNode(hierarchy, c.naics);
+      const title = node?.title ?? titles.get(c.naics) ?? c.naics;
+      const { label } = classifyConfidence(c.score, undefined);
+      const def =
+        settings.showDef && node?.definition ? `<p class="definition">${node.definition}</p>` : "";
+      return `<li><button type="button" class="qa-list-row" data-code="${c.naics}">
+        <div class="qa-list-line1">
+          <span class="qa-cand-conf">${CONFIDENCE_EMOJI[label] ?? ""} ${c.score.toFixed(2)}</span>
+          <span class="qa-cand-code">${c.naics}</span>
+          <span class="qa-cand-title">${title}</span>
+        </div>
+        ${def}
+      </button></li>`;
+    })
+    .join("");
+  qaEl.innerHTML = `
+    <h2 class="qa-heading">Top matches</h2>
+    <label class="qa-list-showdef">
+      <input type="checkbox" id="qa-list-showdef" ${settings.showDef ? "checked" : ""} /> Show definitions
+    </label>
+    <ul class="qa-list">${rows}</ul>
+  `;
+  qaEl.querySelector<HTMLInputElement>("#qa-list-showdef")!.addEventListener("change", (event) => {
+    settings = { ...settings, showDef: (event.target as HTMLInputElement).checked };
+    saveSettings(settings);
+    renderCandidateListQA(candidates, hierarchy, titles);
+  });
+  for (const btn of qaEl.querySelectorAll<HTMLButtonElement>(".qa-list-row")) {
+    btn.addEventListener("click", () => {
+      const code = btn.dataset.code!;
+      const candidate = candidates.find((c) => c.naics === code)!;
+      renderResult(
+        code,
+        hierarchy,
+        titles,
+        candidate.score,
+        classifyConfidence(candidate.score, undefined).label,
+      );
+      qaEl.hidden = true;
+    });
+  }
+}
+
+// §V18: floor narrows the shown pool only, after the band/offerQA decision already made in
+// handleSubmit — an empty pool falls back to the full hierarchy browse rather than a blank list.
+// §V17: routes to the tree or the flat list per the detailsMode setting.
 function renderQA(candidates: NaicsScore[], hierarchy: HierarchyTree, titles: Map<string, string>) {
-  renderQAStep(hierarchy, titles, [{ candidates, label: null }]);
+  qaEl.hidden = false;
+  const pool = filterByFloor(candidates, settings.floor);
+  if (pool.length === 0) {
+    renderHierarchyQA(hierarchy, titles, []);
+    return;
+  }
+  if (settings.details === "list") {
+    renderCandidateListQA(pool, hierarchy, titles);
+  } else {
+    renderQAStep(hierarchy, titles, [{ candidates: pool, label: null }]);
+  }
+}
+
+function rerenderFromSettings() {
+  if (lastSearch?.offerQA) renderQA(lastSearch.candidates, lastSearch.hierarchy, lastSearch.titles);
+}
+
+function syncTermUrl(term: string) {
+  const params = new URLSearchParams(location.search);
+  params.set("term", term);
+  history.replaceState(null, "", `${location.pathname}?${params}`);
 }
 
 async function handleSubmit(text: string) {
@@ -275,8 +385,9 @@ async function handleSubmit(text: string) {
     resultEl.innerHTML = `<p>No match found. Try a different description.</p>`;
     return;
   }
-  lastSearch = { candidates: top, hierarchy, titles };
-  const { label, offerQA } = classifyConfidence(top[0].score, top[1]?.score);
+  syncTermUrl(text); // §V16: successful submit -> URL reflects the searched term.
+  const { label, offerQA } = classifyConfidence(top[0].score, top[1]?.score); // §V18: raw, pre-floor scores
+  lastSearch = { candidates: top, hierarchy, titles, offerQA };
   renderResult(top[0].naics, hierarchy, titles, top[0].score, label); // §V2/§V8: result always shown first
   if (offerQA) renderQA(top, hierarchy, titles);
 }
@@ -314,4 +425,31 @@ clearBtn.addEventListener("click", () => {
   qaEl.innerHTML = "";
   lastSearch = null;
   input.focus();
+  const params = new URLSearchParams(location.search);
+  params.delete("term");
+  history.replaceState(null, "", `${location.pathname}?${params}`);
 });
+
+detailsSelect.addEventListener("change", () => {
+  settings = { ...settings, details: detailsSelect.value as DetailsMode };
+  saveSettings(settings);
+  rerenderFromSettings();
+});
+
+floorInput.addEventListener("change", () => {
+  const floor = clampFloor(Number(floorInput.value) || 0);
+  floorInput.value = String(floor);
+  settings = { ...settings, floor };
+  saveSettings(settings);
+  rerenderFromSettings();
+});
+
+// §V16: `term` query param on load prefills the input and auto-runs the search
+// once model/hierarchy load finishes (§V5), so a shared URL reproduces its result.
+if (initialTerm) {
+  input.value = initialTerm;
+  input.style.height = "auto";
+  input.style.height = `${input.scrollHeight}px`;
+  clearBtn.disabled = false;
+  void loaded.then(() => handleSubmit(initialTerm));
+}
