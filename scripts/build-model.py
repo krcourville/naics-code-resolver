@@ -48,7 +48,10 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--vintage", default="2022", choices=["2017", "2022"])
     parser.add_argument("--data-dir", default=str(BEACON_DIR))
-    parser.add_argument("--out", default=str(REPO_ROOT / "public" / "naics-model.json"))
+    parser.add_argument(
+        "--out",
+        default=str(REPO_ROOT / "packages" / "naics-search" / "src" / "data" / "naics-model.json"),
+    )
     parser.add_argument("--freq-thresh", type=int, default=1)
     parser.add_argument("--wt-umb", type=float, default=0.6)
     parser.add_argument("--wt-exact", type=float, default=0.3)

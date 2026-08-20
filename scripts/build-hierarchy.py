@@ -122,7 +122,12 @@ def main() -> None:
     parser.add_argument("--descriptions-file", help="local descriptions xlsx path; skips the network fetch")
     parser.add_argument("--descriptions-url", default=DEFAULT_DESCRIPTIONS_URL)
     parser.add_argument("--skip-descriptions", action="store_true", help="titles only, no definitions/examples")
-    parser.add_argument("--out", default=str(REPO_ROOT / "public" / "naics-hierarchy.json"))
+    parser.add_argument(
+        "--out",
+        default=str(
+            REPO_ROOT / "packages" / "naics-search" / "src" / "data" / "naics-hierarchy.json"
+        ),
+    )
     args = parser.parse_args()
 
     import openpyxl

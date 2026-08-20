@@ -16,6 +16,17 @@ LLM.
 
 **Live:** https://krcourville.github.io/naics-code-resolver/
 
+## What's in this repo
+
+- **The app** (`src/`, `index.html`) — a React single-page app, the reference
+  implementation above. State is plain React hooks, no routing/state library.
+- **[`@cajuncodemonkey/naics-search`](https://www.npmjs.com/package/@cajuncodemonkey/naics-search)**
+  (`packages/naics-search/`) — the resolver logic (model port, hierarchy drill-down)
+  and data, factored out as a standalone, framework-free npm package. The app above
+  is its own dogfooding React usage example; see the
+  [package README](packages/naics-search/README.md) for the API, or
+  [CONTRIBUTING.md](CONTRIBUTING.md) for release steps.
+
 ## How does it work?
 
 ```mermaid
@@ -129,7 +140,7 @@ That budget doesn't generalize to ML in the browser broadly:
 ```bash
 git submodule update --init   # pulls the beacon submodule
 vp install                    # installs deps
-vp dev                        # dev server at http://localhost:5173
+pnpm dev                      # builds the naics-search pkg, then dev server at http://localhost:5173
 ```
 
 Type a business description, get a 6-digit NAICS code + confidence.
@@ -148,10 +159,11 @@ First e2e run needs browsers: `pnpm exec playwright install chromium`.
 ### Build
 
 ```bash
-pnpm build                    # tsc + vp build -> dist/
+pnpm build                    # builds naics-search pkg, then tsc + vp build -> dist/
 ```
 
-The model artifact (`public/naics-model.json`) is committed, not
-regenerated during build. To refit it manually: `python scripts/build-model.py`
-(needs the beacon submodule). `pnpm infer "<description>"` queries the
-committed model directly, useful for manual sanity checks.
+The model artifact (`packages/naics-search/src/data/naics-model.json`) is
+committed, not regenerated during build. To refit it manually:
+`python scripts/build-model.py` (needs the beacon submodule). `pnpm infer
+"<description>"` queries the committed model directly, useful for manual
+sanity checks.
