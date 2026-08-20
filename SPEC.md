@@ -168,8 +168,8 @@ T58|x|move/adapt `src/naics/*` resolver logic into pkg src, export `search()`+dr
 T59|x|bundle naics-model.json+naics-hierarchy.json into pkg, dynamic-import loader|T58,V23
 T60|x|configure `tsdown` build for pkg (ESM output)|T57
 T61|x|rewrite app as React (`src/main.tsx`+components), consuming pkg instead of local `src/naics/*` copy — dogfood + serve as React usage example. ! keep e2e green (V27)|T58,T65
-T62|.|write `packages/naics-search/README.md`: exported API docs, caveats, simple usage example, link back to repo, release steps|T57,I
-T63|.|add `.github/workflows/publish-naics-search.yml` — tag-triggered build+publish to npm|V25
+T62|x|write `packages/naics-search/README.md`: exported API docs, caveats, simple usage example, link back to repo, release steps|T57,I
+T63|x|add `.github/workflows/publish-naics-search.yml` — tag-triggered build+publish to npm|V25
 T64|.|manual: add `NPM_TOKEN` secret to repo GitHub settings|-
 T65|x|add React + react-dom deps, `@vitejs/plugin-react`, `.tsx` build config — root `package.json` only, ⊥ `packages/naics-search` (keeps §C.30 pkg minimal-deps)|-
 
