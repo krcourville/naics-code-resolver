@@ -34,9 +34,9 @@ static page: free-text business description → client-side ONNX inference → 6
 - pkg built w/ `tsdown`, ESM output.
 - app (`src/main.ts`/`src/naics/*`) consumes this pkg internally — single source of truth, ⊥ duplicated logic.
 - published public npm registry as `@cajuncodemonkey/naics-search` (scope owned).
-- publish = CI, tag-triggered: push tag `naics-search-v*` → GH Actions: `vp install` → `vp check`/`vp test` → `tsdown` build → `npm publish --access public` via `NPM_TOKEN` secret. ⊥ publish on plain `main` push.
+- publish = CI, tag-triggered: push tag `naics-search-v*` → GH Actions: `vp install` → `vp check`/`vp test` → `tsdown` build → `npm publish --access public --provenance` via npm trusted publishing (OIDC, `id-token: write`) — ⊥ long-lived `NPM_TOKEN` secret. ⊥ publish on plain `main` push.
 - `packages/naics-search/README.md` published w/ pkg (npm listing) — ! cover: exported API docs (`search()`+drilldown fns, param/return shapes), caveats (browser-DOM-free but dynamic-import data load, bundle size, sparse-model tradeoffs per §C model constraints), simple usage example, link back to this repo (https://github.com/krcourville/naics-code-resolver), release steps (bump version → commit → tag `naics-search-vX.Y.Z` → push tag).
-- ? `NPM_TOKEN` secret must be added manually to repo GitHub settings — outside spec/build scope, user action.
+- npm registry Trusted Publisher configured on `@cajuncodemonkey/naics-search` (GitHub Actions, `krcourville/naics-code-resolver`, workflow `publish-naics-search.yml`, "Allow npm publish") — outside spec/build scope, user action, done via npmjs.com package settings.
 - every `packages/naics-search/src/index.ts` export (fns, classes, methods, exported types/interfaces incl. fields) ! carry a TSDoc comment (`/** ... */`) — params/return documented where non-obvious. `vp pack --dts` ships these into `dist/index.d.mts`, consumer IDE hover = only API doc surface beyond README.
 
 ## §R RESEARCH
@@ -174,7 +174,7 @@ T60|x|configure `tsdown` build for pkg (ESM output)|T57
 T61|x|rewrite app as React (`src/main.tsx`+components), consuming pkg instead of local `src/naics/*` copy — dogfood + serve as React usage example. ! keep e2e green (V27)|T58,T65
 T62|x|write `packages/naics-search/README.md`: exported API docs, caveats, simple usage example, link back to repo, release steps|T57,I
 T63|x|add `.github/workflows/publish-naics-search.yml` — tag-triggered build+publish to npm|V25
-T64|.|manual: add `NPM_TOKEN` secret to repo GitHub settings|-
+T64|.|manual: configure npm Trusted Publisher (OIDC) for `@cajuncodemonkey/naics-search`|-
 T65|x|add React + react-dom deps, `@vitejs/plugin-react`, `.tsx` build config — root `package.json` only, ⊥ `packages/naics-search` (keeps §C.30 pkg minimal-deps)|-
 T66|x|add TSDoc to every `packages/naics-search/src/index.ts` export lacking one (fns, `BeaconModel` ctor+methods, `SearchResult`/`BeaconParams`/`NaicsScore`/`DrillOption`/`HierarchyNode` fields) — verify via `dist/index.d.mts` after build|T58,I
 T67|x|loading/busy indicator in app: shown while model/hierarchy loading on mount, & while a submit awaits that load — replaces silent wait|V28,I.ui

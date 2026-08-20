@@ -7,6 +7,7 @@ on:
 
 permissions:
   contents: read
+  id-token: write # npm trusted publishing (OIDC) — no NPM_TOKEN needed
 
 jobs:
   publish:
@@ -21,11 +22,10 @@ jobs:
           node-version: 24
           cache: pnpm
           registry-url: https://registry.npmjs.org
+      - run: npm install -g npm@latest # trusted publishing needs npm >=11.5.1
       - run: pnpm install --frozen-lockfile
       - run: pnpm exec vp check
       - run: pnpm exec vp test
       - run: pnpm --filter @cajuncodemonkey/naics-search run build
-      - run: npm publish --access public
+      - run: npm publish --access public --provenance
         working-directory: packages/naics-search
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
