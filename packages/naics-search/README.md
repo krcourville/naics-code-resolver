@@ -91,7 +91,10 @@ const node = getNode(hierarchy, "238220"); // { title, definition?, examples?, c
   the wire). They ship as static `.json` files alongside the package (not inlined into
   the JS bundle) so your bundler's native JSON parsing handles them — inlining as JS
   source measurably slowed cold loads in testing. A cold first `search()`/`loadNaics()`
-  call still typically takes a few seconds.
+  call still typically takes a few seconds. **Make sure your web server/CDN compresses
+  `.json` responses** (gzip or brotli) — that ~7x size difference is the gap between
+  a multi-second cold load and a much longer one; some static hosts don't compress
+  `.json` by default the way they do `.js`/`.css`.
 - **Sparse model, not exhaustive.** The underlying BeaconModel keeps only nonzero
   n-gram → NAICS proportions (~98.8% of the dense form is zero); scores are a purity-
   weighted heuristic over 2017/2022 Census training data, not a guarantee — always
