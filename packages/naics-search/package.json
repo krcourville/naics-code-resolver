@@ -24,6 +24,6 @@
     }
   },
   "scripts": {
-    "build": "vp pack && cp -r src/data data"
+    "build": "vp pack && rm -rf data && cp -r src/data data"
   }
 }

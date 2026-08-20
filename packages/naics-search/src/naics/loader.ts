@@ -11,26 +11,21 @@ export interface LoadedNaics {
 
 let loadPromise: Promise<LoadedNaics> | undefined;
 
-// Plain Node requires `with { type: "json" }` on a real (unbundled) .json dynamic
-// import (throws ERR_IMPORT_ATTRIBUTE_MISSING otherwise). Vite's dev server does the
-// opposite — it serves `.json?import` as a JS module, which conflicts with the native
-// JSON-module MIME check the attribute triggers. Try plain first (bundlers/Vite), retry
-// with the attribute only on Node's specific error, so both environments work.
+// A real (unbundled) .json dynamic import needs `with { type: "json" }` in plain
+// Node and in any real static-file server response (real `application/json`
+// content-type — Node and browsers both enforce the JSON-module import
+// assertion there). Vite's dev server is the outlier: it serves `.json?import`
+// as a JS module, and the assertion conflicts with that. Try plain first (so
+// Vite dev keeps working), fall back to the attribute on ANY failure — the
+// first attempt's error shape differs across Node/browsers, so don't gate on
+// a specific error code/message.
 async function importJson<T>(path: string): Promise<{ default: T }> {
   try {
     return (await import(/* @vite-ignore */ path)) as { default: T };
-  } catch (err) {
-    if (
-      err &&
-      typeof err === "object" &&
-      "code" in err &&
-      err.code === "ERR_IMPORT_ATTRIBUTE_MISSING"
-    ) {
-      return (await import(/* @vite-ignore */ path, { with: { type: "json" } })) as {
-        default: T;
-      };
-    }
-    throw err;
+  } catch {
+    return (await import(/* @vite-ignore */ path, { with: { type: "json" } })) as {
+      default: T;
+    };
   }
 }
 
