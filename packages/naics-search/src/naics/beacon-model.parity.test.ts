@@ -8,7 +8,7 @@ import { BeaconModel, type BeaconParams } from "./beacon-model.ts";
  * data (default hyperparams) as beacon/beacon_example.py. Oracle values are
  * copied verbatim from beacon/beacon_example_output.txt — do not hand-tune.
  */
-const modelPath = fileURLToPath(new URL("../../public/naics-model.json", import.meta.url));
+const modelPath = fileURLToPath(new URL("../data/naics-model.json", import.meta.url));
 const params = JSON.parse(readFileSync(modelPath, "utf-8")) as BeaconParams;
 const model = new BeaconModel(params);
 

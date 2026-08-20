@@ -1,4 +1,4 @@
-import type { NaicsScore } from "./beacon-model.ts";
+import type { NaicsScore } from "@cajuncodemonkey/naics-search";
 
 /** §V18: drop candidates below `floor`. Runs AFTER the §V2 band/offerQA decision — callers
  * must classify confidence off the raw (unfiltered) top-2 scores first, then filter for display. */

@@ -5,16 +5,24 @@
   "license": "MIT",
   "type": "module",
   "scripts": {
-    "dev": "vp dev",
-    "build": "tsc && vp build",
+    "dev": "pnpm --filter @cajuncodemonkey/naics-search run build && vp dev",
+    "build": "pnpm --filter @cajuncodemonkey/naics-search run build && tsc && vp build",
     "preview": "vp preview",
     "test:e2e": "playwright test",
     "infer": "node scripts/infer.ts",
     "prepare": "vp config"
   },
+  "dependencies": {
+    "@cajuncodemonkey/naics-search": "workspace:*",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0"
+  },
   "devDependencies": {
     "@playwright/test": "^1.62.1",
     "@types/node": "^26.2.0",
+    "@types/react": "^19.2.7",
+    "@types/react-dom": "^19.2.4",
+    "@vitejs/plugin-react": "^5.0.4",
     "typescript": "~6.0.2",
     "vite": "catalog:",
     "vite-plus": "catalog:",

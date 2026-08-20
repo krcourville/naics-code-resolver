@@ -7,11 +7,12 @@
     "skipLibCheck": true,
 
     "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "allowArbitraryExtensions": true,
+    "resolveJsonModule": true,
     "verbatimModuleSyntax": true,
     "moduleDetection": "force",
-    "declaration": true,
-    "rootDir": "src",
-    "outDir": "dist",
+    "noEmit": true,
 
     "noUnusedLocals": true,
     "noUnusedParameters": true,

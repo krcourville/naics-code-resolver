@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vite-plus/test";
 import { filterByFloor } from "./floor.ts";
-import type { NaicsScore } from "./beacon-model.ts";
+import type { NaicsScore } from "@cajuncodemonkey/naics-search";
 
 const CANDS: NaicsScore[] = [
   { naics: "238220", score: 0.65 },
