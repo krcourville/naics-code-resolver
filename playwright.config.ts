@@ -5,16 +5,19 @@ export default defineConfig({
   workers: 1, // single worker so the confidence-band tally in resolver.spec.ts sums across all cases
   reporter: "list",
   // model+hierarchy are ~40MB static JSON (pkg ships them as real .json assets, native
-  // JSON.parse, not bundled-as-JS) — a cold first load takes ~5s. Headroom over the
-  // observed ~4.5-6s, not a hang mask.
+  // JSON.parse, not bundled-as-JS). Prod-build load is ~800ms once the OS page cache is
+  // warm, but the very first request against a freshly-started `vp preview` (page cache
+  // cold) still measured ~6s (R10) — headroom for that first-test cold hit, not a hang mask.
   expect: { timeout: 10_000 },
   use: {
     baseURL: "http://localhost:5173",
   },
   webServer: {
-    command: "vp dev",
+    // Prod build + vp preview, not vp dev (R10): dev's JSON `import()` runs through
+    // Vite's JS-module transform pipeline, inflating cold-load ~6x vs real prod UX.
+    command: "pnpm run build && vp preview --port 5173",
     url: "http://localhost:5173",
     reuseExistingServer: !process.env.CI,
-    timeout: 30_000,
+    timeout: 60_000,
   },
 });

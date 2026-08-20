@@ -13,6 +13,7 @@ import {
 } from "@cajuncodemonkey/naics-search";
 import { classifyConfidence } from "./naics/confidence.ts";
 import { filterByFloor } from "./naics/floor.ts";
+import { loadSpike, loadSpikeReal } from "./naics/spike.ts";
 import {
   clampFloor,
   loadSettings,
@@ -390,7 +391,12 @@ export default function App() {
   const [lastSearch, setLastSearch] = useState<LastSearch | null>(null);
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const loadedRef = useRef<Promise<LoadedNaics>>(loadNaics()); // kicked off on mount, never awaited by input handling (§V4)
+  // T70: `?spike=1` (tiny fixture) / `?spike=real` (fetch() real data, README escape hatch) in
+  // dev bypass loadNaics() for manual UX testing.
+  const spikeMode = import.meta.env.DEV ? new URLSearchParams(location.search).get("spike") : null;
+  const loadedRef = useRef<Promise<LoadedNaics>>(
+    spikeMode === "1" ? loadSpike() : spikeMode === "real" ? loadSpikeReal() : loadNaics(),
+  ); // kicked off on mount, never awaited by input handling (§V4)
   const autoRanRef = useRef(false);
 
   useEffect(() => {
