@@ -85,6 +85,11 @@ const node = getNode(hierarchy, "238220"); // { title, definition?, examples?, c
 - `getAncestorPath(tree, code)` — root-to-node `{code,title}[]` chain, for breadcrumbs.
 - `getNode(tree, code)` — full node (`title`, `definition?`, `examples?`, `children`).
 
+Don't want the bundled ~40MB dataset, or want to host/version it yourself? Skip
+`loadNaics()` and construct `BeaconModel` directly with your own params — `new
+BeaconModel(customParams)`, where `customParams` matches the exported `BeaconParams`
+shape. This is the same data `scripts/build-model.py` in the main repo exports.
+
 ## Caveats
 
 - **Data size.** The bundled model + hierarchy are ~40MB uncompressed (~5.5MB gzip over
