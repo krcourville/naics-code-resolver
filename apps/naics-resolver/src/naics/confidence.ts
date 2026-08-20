@@ -1,6 +1,6 @@
 /** Confidence banding per §C: High >=.70, Medium .40-.69, Low <.40; also
  * Q&A whenever the top-2 scores are within .10 of each other, regardless of band. */
-export type ConfidenceLabel = "high" | "medium" | "low";
+type ConfidenceLabel = "high" | "medium" | "low";
 
 export interface Confidence {
   label: ConfidenceLabel;

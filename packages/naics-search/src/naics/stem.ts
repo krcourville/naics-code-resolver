@@ -196,7 +196,7 @@ function r1r2(word: string): [string, string] {
 const suffixReplace = (original: string, old: string, next: string) =>
   original.slice(0, -old.length) + next;
 
-export function stem(word: string): string {
+function stem(word: string): string {
   if (word in SPECIAL_WORDS) return SPECIAL_WORDS[word];
   if (word.length <= 3) return word;
 

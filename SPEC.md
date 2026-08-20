@@ -218,8 +218,8 @@ T70|x|dev-only spike: `?spike=1` (DEV-gated) skips `loadNaics()`, constructs `Be
 T71|x|switch `playwright.config.ts` `webServer` from `vp dev` to prod build + `vp preview` — real UX timing (R10), ⊥ dev-transform-inflated cold-load numbers. update/remove now-stale "~4.5-6s cold load" comment & `expect.timeout` headroom accordingly|R10,V27,V33
 T72|x|reorg: move app (`src/`,`index.html`,`public/`) → `apps/naics-resolver/`, w/ own new `vite.config.ts` (React plugin, base path) + `tsconfig.json` — root `vite.config.ts` stays, keeps shared lint/fmt/staged config, add `overrides` for `apps/naics-resolver/**`/`packages/naics-search/**` (V42). update `pnpm-workspace.yaml` (drop bare `.`, add `apps/*`), root `package.json` scripts + root `tsconfig.json` include list (drop `src`), `playwright.config.ts` paths, `.github/workflows/deploy.yml` `path:` input → `apps/naics-resolver/dist` (V43) + `publish-naics-search.yml` paths|V37,V42,V43
 T73|x|verify `vp build apps/naics-resolver`/`vp dev`/`vp preview`/GH Pages deploy (incl. corrected artifact path)/e2e all green post-reorg|T72,V37,V42,V43,V27
-T74|.|add `knip.json` (or package.json `knip` key), scope `apps/*`+`packages/naics-search/src/**`, exclude `beacon/**`; wire as dedicated `vp run` task + CI step, ⊥ folded into `vp check` (V44)|V38,V41,V44,R11
-T75|.|fix knip findings (unused files/exports/deps) surfaced by T74|T74,V38
+T74|x|add `knip.json` (or package.json `knip` key), scope `apps/*`+`packages/naics-search/src/**`, exclude `beacon/**`; wire as dedicated `vp run` task + CI step, ⊥ folded into `vp check` (V44)|V38,V41,V44,R11
+T75|x|fix knip findings (unused files/exports/deps) surfaced by T74|T74,V38
 T76|.|enable tsdown `publint: true`+`attw: {profile: 'esm-only'}` on `packages/naics-search` build (`vp pack`), wire failures into CI as dedicated step, ⊥ folded into `vp check` (V44)|V39,V40,V44,R13
 T77|.|fix publint/attw findings surfaced by T76|T76,V39,V40
 

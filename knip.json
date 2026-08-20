@@ -1,0 +1,15 @@
+{
+  "$schema": "https://unpkg.com/knip@6/schema.json",
+  "workspaces": {
+    ".": {
+      "project": ["scripts/**/*.ts", "e2e/**/*.ts"]
+    },
+    "apps/naics-resolver": {
+      "project": ["src/**/*.{ts,tsx}"]
+    },
+    "packages/naics-search": {
+      "entry": ["src/index.ts"],
+      "project": ["src/**/*.ts"]
+    }
+  }
+}
