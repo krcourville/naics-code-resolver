@@ -235,6 +235,8 @@ importers:
         specifier: ^4.1.10
         version: 4.1.10(@types/node@26.2.0)(@vitest/browser-preview@4.1.10)(@voidzero-dev/vite-plus-core@0.2.6(@types/node@26.2.0)(typescript@6.0.3))
 
+  packages/naics-search: {}
+
 packages:
 
   '@babel/code-frame@7.29.7':

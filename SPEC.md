@@ -2,11 +2,12 @@
 
 ## §G GOAL
 
-static page: free-text business description → client-side ONNX inference → 6-digit NAICS code; ambiguous/low-confidence → drill-down clarifying Q&A vs official NAICS hierarchy till single code confirmed.
+static page: free-text business description → client-side ONNX inference → 6-digit NAICS code; ambiguous/low-confidence → drill-down clarifying Q&A vs official NAICS hierarchy till single code confirmed. core resolver logic also shipped as standalone npm pkg `@cajuncodemonkey/naics-search` (search+drilldown fns) for reuse outside this app.
 
 ## §C CONSTRAINTS
 
-- Vite+ static build (`vp build`), vanilla TS, single page. ⊥ backend, ⊥ API routes, ⊥ server-side inference.
+- Vite+ static build (`vp build`), React, single page. ⊥ backend, ⊥ API routes, ⊥ server-side inference.
+- React state via built-in hooks only (`useState`/`useEffect`/etc). ⊥ Redux/Zustand/router lib — single page, no routing needed.
 - BeaconModel logic ported to TS, runs client-side only. ⊥ ONNX/WASM runtime — BeaconModel = custom sklearn `BaseEstimator` (hand-rolled clean_text/stem/n-gram dict lookup/purity-weighted scoring), ⊥ standard sklearn Pipeline → skl2onnx has ⊥ registered converter, ONNX export infeasible.
 - BEACON census repo added as git submodule — source of truth for fit/predict logic to port.
 - standalone script fits BeaconModel, exports fitted dictionaries/weights/sector params → `naics-model.json` on demand. sparse format required — dense per-sector float arrays are ~98.8% zero (BEACON purity weights concentrate each n-gram on ~1 NAICS code, avg 1.17 nonzero/key on real 2017 data) and blow up to 391MB; sparse {ngram:{naicsCode:prop}} + 6-decimal rounding + compact JSON → 35.5MB raw/5.5MB gzip. artifact committed to source control. ⊥ auto-run in CI — user updates manually.
@@ -26,6 +27,16 @@ static page: free-text business description → client-side ONNX inference → 6
 - settings (detailsMode, alwaysShowDefinition, floor) driven by query params, persisted localStorage. load order: query param > localStorage > default (§V15). detailsMode default = list (plain list, ⊥ decision tree).
 - floor setting: number [0,1], default 0.
 - visual theme = Cajun Code Monkey brand palette (primary #F27B57/#D65C37 orange, #FFAA02/#DC8503 gold accent, neutrals #000000–#FFFFFF, tan/brown #F4C7AA/#D59A7C/#F7C5A0/#F9DBC9), replaces prior generic purple accent (#aa3bff). light+dark mode both derive from same brand hues. heading font = "M PLUS Rounded 1C" weight 900 (Google Font).
+- new workspace pkg `packages/naics-search/`, added to `pnpm-workspace.yaml` packages list. exports functions only, ⊥ UI framework/React, minimal deps.
+- pkg exports `search(businessDescription: string)` → list `{naicsCode, title, description, censusUrl}`. `censusUrl` = `https://www.census.gov/naics/?input={code}&year=2022&details={code}`, `{code}`=naicsCode.
+- pkg also exports drilldown Q&A functions (ported from `src/naics/drilldown.ts`) — full resolver flow available, ⊥ search() alone.
+- model+hierarchy JSON bundled inside pkg, loaded via dynamic import — importing module ⊥ pay data cost upfront, loads async on first `search()`/drilldown call.
+- pkg built w/ `tsdown`, ESM output.
+- app (`src/main.ts`/`src/naics/*`) consumes this pkg internally — single source of truth, ⊥ duplicated logic.
+- published public npm registry as `@cajuncodemonkey/naics-search` (scope owned).
+- publish = CI, tag-triggered: push tag `naics-search-v*` → GH Actions: `vp install` → `vp check`/`vp test` → `tsdown` build → `npm publish --access public` via `NPM_TOKEN` secret. ⊥ publish on plain `main` push.
+- `packages/naics-search/README.md` published w/ pkg (npm listing) — ! cover: exported API docs (`search()`+drilldown fns, param/return shapes), caveats (browser-DOM-free but dynamic-import data load, bundle size, sparse-model tradeoffs per §C model constraints), simple usage example, link back to this repo (https://github.com/krcourville/naics-code-resolver), release steps (bump version → commit → tag `naics-search-vX.Y.Z` → push tag).
+- ? `NPM_TOKEN` secret must be added manually to repo GitHub settings — outside spec/build scope, user action.
 
 ## §R RESEARCH
 
@@ -59,6 +70,9 @@ R7|effort sizing (measured 2026-08-16): baseline dict = 542588 n-gram keys + 393
 - ui: plain list result view (detailsMode=list) — rows: code, title, confidence (§V8 format). row click → expand → definition (§V10 fallback applies).
 - asset src: `~/devp/cajun-code-monkey/assets/PDF Guideline.pdf` — brand colors + font spec (external ref, ⊥ copied into repo).
 - font: Google Font "M PLUS Rounded 1C" weight 900, used for h1 + heading text.
+- pkg: `@cajuncodemonkey/naics-search` — exports `search(text: string): Promise<{naicsCode, title, description, censusUrl}[]>` + drilldown fns (exact names TBD @ build).
+- workflow: `.github/workflows/publish-naics-search.yml` — tag-triggered (`naics-search-v*`) build+publish to npm.
+- file: `packages/naics-search/README.md` — published w/ pkg (npm listing). sections: exported API docs, caveats, usage example, link back to repo, release instructions.
 
 ## §V INVARIANTS
 
@@ -83,6 +97,10 @@ V18: floor filters candidates w/ confidence < floor from Q&A/candidate pool (lis
 V19: --accent/--accent-bg/--accent-border (light+dark) ! derive from Cajun Code Monkey palette (§C) — ⊥ prior arbitrary purple (#aa3bff removed).
 V20: h1 + heading text ! use "M PLUS Rounded 1C" 900, fallback → --sans stack if font fails load.
 V21: malformed/corrupt `naics-settings` localStorage JSON ! crash app — falls back to defaults, same as absent.
+V22: `search()` results ! include `censusUrl` built from template, `{code}`=naicsCode (§C).
+V23: importing `@cajuncodemonkey/naics-search` ! ⊥ trigger data load — model/hierarchy JSON loads via dynamic import only on first `search()`/drilldown call.
+V24: pkg ! depend on DOM/browser-only globals beyond dynamic import — usable in any modern JS/bundler runtime.
+V25: publish workflow ! run only on tag push matching `naics-search-v*`, ⊥ on plain `main` push.
 
 ## §T TASKS
 
@@ -143,6 +161,15 @@ T53|x|floor filtering across candidate pool (list + decision tree)|V18,T50
 T54|x|Playwright: shareable URL (term+settings round-trip), floor filtering, tree vs list mode|T48,T51,T53
 T55|x|swap --accent/--accent-bg/--accent-border tokens (light+dark) → Cajun Code Monkey palette (#F27B57/#D65C37/#FFAA02/#DC8503)|V19
 T56|x|load "M PLUS Rounded 1C" 900 (Google Fonts) for --heading, apply to h1 + qa-heading|V20
+T57|x|scaffold `packages/naics-search/` workspace pkg, add to `pnpm-workspace.yaml`|-
+T58|.|move/adapt `src/naics/*` resolver logic into pkg src, export `search()`+drilldown fns|T57,V22,V23
+T59|.|bundle naics-model.json+naics-hierarchy.json into pkg, dynamic-import loader|T58,V23
+T60|.|configure `tsdown` build for pkg (ESM output)|T57
+T61|.|rewrite app as React (`src/main.tsx`+components), consuming pkg instead of local `src/naics/*` copy — dogfood + serve as React usage example|T58
+T62|.|write `packages/naics-search/README.md`: exported API docs, caveats, simple usage example, link back to repo, release steps|T57,I
+T63|.|add `.github/workflows/publish-naics-search.yml` — tag-triggered build+publish to npm|V25
+T64|.|manual: add `NPM_TOKEN` secret to repo GitHub settings|-
+T65|.|add React + react-dom deps, `@vitejs/plugin-react`, `.tsx` build config|T61
 
 ## §B BUGS
 

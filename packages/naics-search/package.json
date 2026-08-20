@@ -1,0 +1,28 @@
+{
+  "name": "@cajuncodemonkey/naics-search",
+  "version": "0.0.0",
+  "description": "Free-text business description -> NAICS code search + drilldown Q&A, ported from the BEACON model.",
+  "homepage": "https://github.com/krcourville/naics-code-resolver#readme",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/krcourville/naics-code-resolver.git",
+    "directory": "packages/naics-search"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsdown"
+  }
+}
