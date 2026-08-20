@@ -132,3 +132,28 @@ test("'How does it work?' link points to the README section on GitHub", async ({
   );
   await expect(link).toHaveAttribute("target", "_blank");
 });
+
+// §V28: user must see feedback while the model is loading, ⊥ a silent multi-second wait.
+test("loading indicator shown until the model is ready", async ({ page }) => {
+  await page.goto("/");
+  await expect(page.locator("#naics-loading")).toBeVisible();
+  await expect(page.locator("#naics-loading")).toBeHidden(); // model load completes
+});
+
+// §V29: result panel + Q&A candidates link out to census.gov for the code shown, new tab.
+test("result panel and Q&A candidates link to census.gov, opened in a new tab", async ({
+  page,
+}) => {
+  await page.goto("/?details=tree");
+  await page.fill("#naics-input", "hvac");
+  await page.click("#naics-submit");
+
+  const resultLink = page.locator("#naics-result .census-link");
+  await expect(resultLink).toHaveAttribute("href", /census\.gov\/naics\/\?input=\d{6}/);
+  await expect(resultLink).toHaveAttribute("target", "_blank");
+
+  await page.locator('#naics-qa button[data-group="42"]').click();
+  const candidateLink = page.locator("#naics-qa .census-link").first();
+  await expect(candidateLink).toHaveAttribute("href", /census\.gov\/naics\/\?input=\d{6}/);
+  await expect(candidateLink).toHaveAttribute("target", "_blank");
+});

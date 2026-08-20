@@ -1,5 +1,6 @@
 import { Fragment, useEffect, useRef, useState, type KeyboardEvent, type SubmitEvent } from "react";
 import {
+  censusUrl,
   drilldownOptions,
   getAncestorPath,
   getNode,
@@ -113,6 +114,9 @@ function ResultPanel({
           ))}
         </ul>
       ) : null}
+      <a className="census-link" href={censusUrl(code)} target="_blank" rel="noopener">
+        View {code} on census.gov
+      </a>
       <button type="button" id="naics-try-again" onClick={onTryAgain}>
         🔄 See other matches
       </button>
@@ -208,6 +212,9 @@ function CandidateCard({
         </div>
         {node?.definition && <p className="definition">{node.definition}</p>}
       </button>
+      <a className="census-link" href={censusUrl(candidate.naics)} target="_blank" rel="noopener">
+        View on census.gov
+      </a>
     </li>
   );
 }
@@ -358,6 +365,9 @@ function ListQA({
                 </div>
                 {showDef && node?.definition && <p className="definition">{node.definition}</p>}
               </button>
+              <a className="census-link" href={censusUrl(c.naics)} target="_blank" rel="noopener">
+                View on census.gov
+              </a>
             </li>
           );
         })}
@@ -375,6 +385,7 @@ export default function App() {
   const [loaded, setLoaded] = useState<LoadedNaics | null>(null);
   const [result, setResult] = useState<ResultState | null>(null);
   const [noMatch, setNoMatch] = useState(false);
+  const [pending, setPending] = useState(false);
   const [qa, setQa] = useState<QAState | null>(null);
   const [lastSearch, setLastSearch] = useState<LastSearch | null>(null);
 
@@ -432,21 +443,26 @@ export default function App() {
   }
 
   async function handleSubmit(text: string, resources?: LoadedNaics) {
-    const { model } = resources ?? (await loadedRef.current); // §V5: await in-flight load, never drop/error
-    setQa(null);
-    const top = model.predictTopN(text, 5);
-    if (top.length === 0) {
-      setLastSearch(null);
-      setResult(null);
-      setNoMatch(true);
-      return;
+    setPending(true); // §V28: visible feedback while a submit is in-flight (mostly the §V5 load-wait case)
+    try {
+      const { model } = resources ?? (await loadedRef.current); // §V5: await in-flight load, never drop/error
+      setQa(null);
+      const top = model.predictTopN(text, 5);
+      if (top.length === 0) {
+        setLastSearch(null);
+        setResult(null);
+        setNoMatch(true);
+        return;
+      }
+      setNoMatch(false);
+      syncTermUrl(text); // §V16: successful submit -> URL reflects the searched term.
+      const { label, offerQA } = classifyConfidence(top[0].score, top[1]?.score); // §V18: raw, pre-floor scores
+      setLastSearch({ candidates: top, offerQA });
+      setResult({ code: top[0].naics, score: top[0].score, label }); // §V2/§V8: result always shown first
+      if (offerQA) startQA(top, settings);
+    } finally {
+      setPending(false);
     }
-    setNoMatch(false);
-    syncTermUrl(text); // §V16: successful submit -> URL reflects the searched term.
-    const { label, offerQA } = classifyConfidence(top[0].score, top[1]?.score); // §V18: raw, pre-floor scores
-    setLastSearch({ candidates: top, offerQA });
-    setResult({ code: top[0].naics, score: top[0].score, label }); // §V2/§V8: result always shown first
-    if (offerQA) startQA(top, settings);
   }
 
   function onFormSubmit(event: SubmitEvent) {
@@ -553,6 +569,16 @@ export default function App() {
         >
           💡 How does it work?
         </a>
+        {!loaded && (
+          <p id="naics-loading" role="status">
+            ⏳ Loading NAICS model…
+          </p>
+        )}
+        {pending && loaded && (
+          <p id="naics-pending" role="status">
+            ⏳ Finding code…
+          </p>
+        )}
         {result && loaded && (
           <ResultPanel
             code={result.code}

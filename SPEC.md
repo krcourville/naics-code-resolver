@@ -72,6 +72,7 @@ R7|effort sizing (measured 2026-08-16): baseline dict = 542588 n-gram keys + 393
 - asset src: `~/devp/cajun-code-monkey/assets/PDF Guideline.pdf` — brand colors + font spec (external ref, ⊥ copied into repo).
 - font: Google Font "M PLUS Rounded 1C" weight 900, used for h1 + heading text.
 - pkg: `@cajuncodemonkey/naics-search` — exports `search(text: string): Promise<{naicsCode, title, description, censusUrl, score}[]>` + drilldown fns (exact names TBD @ build).
+- pkg exports `censusUrl(naicsCode: string): string` standalone (already used internally by `search()`) — app's result/candidate views (which bypass `search()`, using `loadNaics()`+`predictTopN` directly for Q&A) reuse it, ⊥ duplicate the URL template (§C:35 single source of truth).
 - workflow: `.github/workflows/publish-naics-search.yml` — tag-triggered (`naics-search-v*`) build+publish to npm.
 - file: `packages/naics-search/README.md` — published w/ pkg (npm listing). sections: exported API docs, caveats, usage example, link back to repo, release instructions.
 
@@ -104,6 +105,8 @@ V24: pkg ! depend on DOM/browser-only globals beyond dynamic import — usable i
 V25: publish workflow ! run only on tag push matching `naics-search-v*`, ⊥ on plain `main` push.
 V26: `scripts/build-model.py` & `build-hierarchy.py` `--out` default ! diverge from path pkg loader actually reads — single declared data path, ⊥ manual dual-location sync (guards T59).
 V27: React rewrite (T61) ! regress `e2e/resolver.spec.ts`|`e2e/settings.spec.ts` — DOM/selectors preserved or e2e updated same commit, `vp test:e2e` green required before T61 flips `x`.
+V28: user ! left w/o feedback while model/hierarchy loading (§V4/§V5) or a submit in-flight — visible busy/loading indicator shown both cases, ⊥ blank/static UI during multi-second cold load (measured ~4.5-6s, T59 caveat).
+V29: result panel & Q&A candidate views (tree/list/card) ! show a census.gov link (pkg `censusUrl()`) for the displayed code, opens new tab (`target="_blank" rel="noopener"`, matching existing header/footer link pattern).
 
 ## §T TASKS
 
@@ -174,6 +177,8 @@ T63|x|add `.github/workflows/publish-naics-search.yml` — tag-triggered build+p
 T64|.|manual: add `NPM_TOKEN` secret to repo GitHub settings|-
 T65|x|add React + react-dom deps, `@vitejs/plugin-react`, `.tsx` build config — root `package.json` only, ⊥ `packages/naics-search` (keeps §C.30 pkg minimal-deps)|-
 T66|x|add TSDoc to every `packages/naics-search/src/index.ts` export lacking one (fns, `BeaconModel` ctor+methods, `SearchResult`/`BeaconParams`/`NaicsScore`/`DrillOption`/`HierarchyNode` fields) — verify via `dist/index.d.mts` after build|T58,I
+T67|x|loading/busy indicator in app: shown while model/hierarchy loading on mount, & while a submit awaits that load — replaces silent wait|V28,I.ui
+T68|x|export `censusUrl()` standalone from pkg index.ts (extract from `search()`'s internal helper); wire census.gov link (new tab) into app's ResultPanel + CandidateCard + ListQA row|V29,I
 
 ## §B BUGS
 

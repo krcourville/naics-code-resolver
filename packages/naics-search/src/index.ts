@@ -25,7 +25,8 @@ export interface SearchResult {
   score: number;
 }
 
-function censusUrl(naicsCode: string): string {
+/** Census NAICS lookup page for a code, e.g. for a "view on census.gov" link. */
+export function censusUrl(naicsCode: string): string {
   return `https://www.census.gov/naics/?input=${naicsCode}&year=2022&details=${naicsCode}`;
 }
 
