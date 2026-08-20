@@ -5,17 +5,15 @@
   "license": "MIT",
   "type": "module",
   "scripts": {
-    "dev": "pnpm --filter @cajuncodemonkey/naics-search run build && vp dev",
-    "build": "pnpm --filter @cajuncodemonkey/naics-search run build && tsc && vp build && rm -rf dist/data && cp -r packages/naics-search/data dist/data",
-    "preview": "vp preview",
+    "dev": "pnpm --filter @cajuncodemonkey/naics-search run build && pnpm --filter naics-resolver run dev",
+    "build": "pnpm --filter @cajuncodemonkey/naics-search run build && pnpm --filter naics-resolver run build && rm -rf apps/naics-resolver/dist/data && cp -r packages/naics-search/data apps/naics-resolver/dist/data",
+    "preview": "pnpm --filter naics-resolver run preview",
     "test:e2e": "playwright test",
     "infer": "node scripts/infer.ts",
     "prepare": "vp config"
   },
   "dependencies": {
-    "@cajuncodemonkey/naics-search": "workspace:*",
-    "react": "^19.2.0",
-    "react-dom": "^19.2.0"
+    "@cajuncodemonkey/naics-search": "workspace:*"
   },
   "devDependencies": {
     "@playwright/test": "^1.62.1",

@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { TEST_CASES, type TestCaseCategory } from "../src/naics/test-cases.ts";
+import { TEST_CASES, type TestCaseCategory } from "../apps/naics-resolver/src/naics/test-cases.ts";
 
 const RESULT_RE = /confidence: (\d\.\d\d) \((high|medium|low)\)/;
 

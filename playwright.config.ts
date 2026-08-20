@@ -15,7 +15,7 @@ export default defineConfig({
   webServer: {
     // Prod build + vp preview, not vp dev (R10): dev's JSON `import()` runs through
     // Vite's JS-module transform pipeline, inflating cold-load ~6x vs real prod UX.
-    command: "pnpm run build && vp preview --port 5173",
+    command: "pnpm run build && vp preview apps/naics-resolver --port 5173",
     url: "http://localhost:5173",
     reuseExistingServer: !process.env.CI,
     timeout: 60_000,

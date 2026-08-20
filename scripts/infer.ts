@@ -1,5 +1,5 @@
 import { loadNaics } from "@cajuncodemonkey/naics-search";
-import { classifyConfidence } from "../src/naics/confidence.ts";
+import { classifyConfidence } from "../apps/naics-resolver/src/naics/confidence.ts";
 
 const text = process.argv[2];
 if (!text) {

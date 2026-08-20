@@ -219,12 +219,6 @@ importers:
       '@cajuncodemonkey/naics-search':
         specifier: workspace:*
         version: link:packages/naics-search
-      react:
-        specifier: ^19.2.0
-        version: 19.2.8
-      react-dom:
-        specifier: ^19.2.0
-        version: 19.2.8(react@19.2.8)
     devDependencies:
       '@playwright/test':
         specifier: ^1.62.1
@@ -253,6 +247,18 @@ importers:
       vitest:
         specifier: ^4.1.10
         version: 4.1.10(@types/node@26.2.0)(@vitest/browser-preview@4.1.10)(@voidzero-dev/vite-plus-core@0.2.6(@types/node@26.2.0)(typescript@6.0.3))
+
+  apps/naics-resolver:
+    dependencies:
+      '@cajuncodemonkey/naics-search':
+        specifier: workspace:*
+        version: link:../../packages/naics-search
+      react:
+        specifier: ^19.2.0
+        version: 19.2.8
+      react-dom:
+        specifier: ^19.2.0
+        version: 19.2.8(react@19.2.8)
 
   packages/naics-search: {}
 

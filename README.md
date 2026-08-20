@@ -18,7 +18,7 @@ LLM.
 
 ## What's in this repo
 
-- **The app** (`src/`, `index.html`) — a React single-page app, the reference
+- **The app** (`apps/naics-resolver/`) — a React single-page app, the reference
   implementation above. State is plain React hooks, no routing/state library.
 - **[`@cajuncodemonkey/naics-search`](https://www.npmjs.com/package/@cajuncodemonkey/naics-search)**
   (`packages/naics-search/`) — the resolver logic (model port, hierarchy drill-down)
