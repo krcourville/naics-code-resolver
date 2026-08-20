@@ -220,8 +220,8 @@ T72|x|reorg: move app (`src/`,`index.html`,`public/`) → `apps/naics-resolver/`
 T73|x|verify `vp build apps/naics-resolver`/`vp dev`/`vp preview`/GH Pages deploy (incl. corrected artifact path)/e2e all green post-reorg|T72,V37,V42,V43,V27
 T74|x|add `knip.json` (or package.json `knip` key), scope `apps/*`+`packages/naics-search/src/**`, exclude `beacon/**`; wire as dedicated `vp run` task + CI step, ⊥ folded into `vp check` (V44)|V38,V41,V44,R11
 T75|x|fix knip findings (unused files/exports/deps) surfaced by T74|T74,V38
-T76|.|enable tsdown `publint: true`+`attw: {profile: 'esm-only'}` on `packages/naics-search` build (`vp pack`), wire failures into CI as dedicated step, ⊥ folded into `vp check` (V44)|V39,V40,V44,R13
-T77|.|fix publint/attw findings surfaced by T76|T76,V39,V40
+T76|x|enable tsdown `publint: true`+`attw: {profile: 'esm-only'}` on `packages/naics-search` build (`vp pack`), wire failures into CI as dedicated step, ⊥ folded into `vp check` (V44)|V39,V40,V44,R13
+T77|x|fix publint/attw findings surfaced by T76|T76,V39,V40
 
 ## §B BUGS
 

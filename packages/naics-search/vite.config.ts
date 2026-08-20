@@ -6,5 +6,7 @@ export default defineConfig({
     dts: true,
     format: ["esm"],
     deps: { neverBundle: [/\.json$/] },
+    publint: true,
+    attw: { profile: "esm-only" },
   },
 });

@@ -6,7 +6,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/krcourville/naics-code-resolver.git",
+    "url": "git+https://github.com/krcourville/naics-code-resolver.git",
     "directory": "packages/naics-search"
   },
   "files": [
@@ -25,5 +25,9 @@
   },
   "scripts": {
     "build": "vp pack && rm -rf data && cp -r src/data data"
+  },
+  "devDependencies": {
+    "@arethetypeswrong/core": "^0.18.5",
+    "publint": "^0.3.24"
   }
 }
