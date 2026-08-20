@@ -6,8 +6,9 @@ from the [BEACON](https://github.com/uscensusbureau/BEACON) model — no network
 no server, runs entirely client-side.
 
 Built for [naics-code-resolver](https://github.com/krcourville/naics-code-resolver),
-a free-text NAICS code lookup tool. See that repo for the live app, the full resolver
-UI this package powers, and the "how it works" writeup.
+a free-text NAICS code lookup tool. See that repo for the full resolver UI this
+package powers and the "how it works" writeup, or try the
+[live app](https://krcourville.github.io/naics-code-resolver/) directly.
 
 ## Install
 
