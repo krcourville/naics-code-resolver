@@ -11,6 +11,7 @@
     "test:e2e": "playwright test",
     "infer": "node scripts/infer.ts",
     "lint:knip": "knip",
+    "ci": "pnpm --filter @cajuncodemonkey/naics-search run build && vp check && vp test",
     "prepare": "vp config"
   },
   "dependencies": {
