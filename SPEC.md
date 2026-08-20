@@ -174,7 +174,7 @@ T60|x|configure `tsdown` build for pkg (ESM output)|T57
 T61|x|rewrite app as React (`src/main.tsx`+components), consuming pkg instead of local `src/naics/*` copy — dogfood + serve as React usage example. ! keep e2e green (V27)|T58,T65
 T62|x|write `packages/naics-search/README.md`: exported API docs, caveats, simple usage example, link back to repo, release steps|T57,I
 T63|x|add `.github/workflows/publish-naics-search.yml` — tag-triggered build+publish to npm|V25
-T64|.|manual: configure npm Trusted Publisher (OIDC) for `@cajuncodemonkey/naics-search`|-
+T64|x|manual: configure npm Trusted Publisher (OIDC) for `@cajuncodemonkey/naics-search`|-
 T65|x|add React + react-dom deps, `@vitejs/plugin-react`, `.tsx` build config — root `package.json` only, ⊥ `packages/naics-search` (keeps §C.30 pkg minimal-deps)|-
 T66|x|add TSDoc to every `packages/naics-search/src/index.ts` export lacking one (fns, `BeaconModel` ctor+methods, `SearchResult`/`BeaconParams`/`NaicsScore`/`DrillOption`/`HierarchyNode` fields) — verify via `dist/index.d.mts` after build|T58,I
 T67|x|loading/busy indicator in app: shown while model/hierarchy loading on mount, & while a submit awaits that load — replaces silent wait|V28,I.ui
