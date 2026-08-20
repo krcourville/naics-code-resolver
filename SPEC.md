@@ -35,7 +35,8 @@ static page: free-text business description → client-side ONNX inference → 6
 - app (`src/main.ts`/`src/naics/*`) consumes this pkg internally — single source of truth, ⊥ duplicated logic.
 - published public npm registry as `@cajuncodemonkey/naics-search` (scope owned).
 - publish = CI, tag-triggered: push tag `naics-search-v*` → GH Actions: `vp install` → `vp check`/`vp test` → `tsdown` build → `npm publish --access public --provenance` via npm trusted publishing (OIDC, `id-token: write`) — ⊥ long-lived `NPM_TOKEN` secret. ⊥ publish on plain `main` push.
-- `packages/naics-search/README.md` published w/ pkg (npm listing) — ! cover: exported API docs (`search()`+drilldown fns, param/return shapes), caveats (browser-DOM-free but dynamic-import data load, bundle size, sparse-model tradeoffs per §C model constraints), simple usage example, link back to this repo (https://github.com/krcourville/naics-code-resolver), release steps (bump version → commit → tag `naics-search-vX.Y.Z` → push tag).
+- `packages/naics-search/README.md` published w/ pkg (npm listing) — ! cover: exported API docs (`search()`+drilldown fns, param/return shapes), caveats (browser-DOM-free but dynamic-import data load, bundle size, sparse-model tradeoffs per §C model constraints), simple usage example, link back to this repo (https://github.com/krcourville/naics-code-resolver). ⊥ release steps — those live in repo-root `CONTRIBUTING.md` instead (npm listing = end-user docs, ⊥ maintainer process).
+- repo-root `CONTRIBUTING.md` — maintainer release steps for `@cajuncodemonkey/naics-search`: bump version → commit → tag `naics-search-vX.Y.Z` → push tag → CI publishes via npm Trusted Publisher (OIDC, T64).
 - npm registry Trusted Publisher configured on `@cajuncodemonkey/naics-search` (GitHub Actions, `krcourville/naics-code-resolver`, workflow `publish-naics-search.yml`, "Allow npm publish") — outside spec/build scope, user action, done via npmjs.com package settings.
 - every `packages/naics-search/src/index.ts` export (fns, classes, methods, exported types/interfaces incl. fields) ! carry a TSDoc comment (`/** ... */`) — params/return documented where non-obvious. `vp pack --dts` ships these into `dist/index.d.mts`, consumer IDE hover = only API doc surface beyond README.
 
@@ -74,7 +75,8 @@ R7|effort sizing (measured 2026-08-16): baseline dict = 542588 n-gram keys + 393
 - pkg: `@cajuncodemonkey/naics-search` — exports `search(text: string): Promise<{naicsCode, title, description, censusUrl, score}[]>` + drilldown fns (exact names TBD @ build).
 - pkg exports `censusUrl(naicsCode: string): string` standalone (already used internally by `search()`) — app's result/candidate views (which bypass `search()`, using `loadNaics()`+`predictTopN` directly for Q&A) reuse it, ⊥ duplicate the URL template (§C:35 single source of truth).
 - workflow: `.github/workflows/publish-naics-search.yml` — tag-triggered (`naics-search-v*`) build+publish to npm.
-- file: `packages/naics-search/README.md` — published w/ pkg (npm listing). sections: exported API docs, caveats, usage example, link back to repo, release instructions.
+- file: `packages/naics-search/README.md` — published w/ pkg (npm listing). sections: exported API docs, caveats, usage example, link back to repo. ⊥ release instructions.
+- file: `CONTRIBUTING.md` (repo root) — maintainer release steps for `@cajuncodemonkey/naics-search`.
 
 ## §V INVARIANTS
 
@@ -179,6 +181,7 @@ T65|x|add React + react-dom deps, `@vitejs/plugin-react`, `.tsx` build config �
 T66|x|add TSDoc to every `packages/naics-search/src/index.ts` export lacking one (fns, `BeaconModel` ctor+methods, `SearchResult`/`BeaconParams`/`NaicsScore`/`DrillOption`/`HierarchyNode` fields) — verify via `dist/index.d.mts` after build|T58,I
 T67|x|loading/busy indicator in app: shown while model/hierarchy loading on mount, & while a submit awaits that load — replaces silent wait|V28,I.ui
 T68|x|export `censusUrl()` standalone from pkg index.ts (extract from `search()`'s internal helper); wire census.gov link (new tab) into app's ResultPanel + CandidateCard + ListQA row|V29,I
+T69|x|move "Release (maintainers)" section out of `packages/naics-search/README.md` into new repo-root `CONTRIBUTING.md`|I
 
 ## §B BUGS
 

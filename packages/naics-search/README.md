@@ -109,10 +109,5 @@ const node = getNode(hierarchy, "238220"); // { title, definition?, examples?, c
 MIT. BEACON (the model this package ports) is public domain (CC0 1.0) — see the
 [upstream license](https://github.com/uscensusbureau/BEACON/blob/main/LICENSE.md).
 
-## Release (maintainers)
-
-1. Bump `version` in `packages/naics-search/package.json`.
-2. Commit the bump.
-3. Tag: `git tag naics-search-vX.Y.Z && git push --tags`.
-4. The `publish-naics-search` GitHub Actions workflow builds and publishes to npm on
-   that tag push.
+See [CONTRIBUTING.md](https://github.com/krcourville/naics-code-resolver/blob/main/CONTRIBUTING.md)
+in the main repo for release steps.
