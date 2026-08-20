@@ -1,5 +1,6 @@
 import type { HierarchyNode, HierarchyTree } from "./hierarchy.ts";
 
+/** A selectable drill-down step: one hierarchy node, code + title only. */
 export interface DrillOption {
   code: string;
   title: string;

@@ -5,23 +5,38 @@
  */
 import { cleanText } from "./stem.ts";
 
+/**
+ * Fitted BeaconModel parameters, as exported by `scripts/build-model.py`
+ * (see naics-code-resolver repo). Sparse: the `dict_*_props` maps only carry
+ * nonzero {naicsCode: proportion} entries per n-gram/sector.
+ */
 export interface BeaconParams {
+  /** Minimum n-gram frequency kept during fit. */
   freq_thresh: number;
+  /** Ensemble weight for the umbrella (subset) feature score. */
   wt_umb: number;
+  /** Ensemble weight for the exact-match feature score. */
   wt_exact: number;
+  /** All 6-digit NAICS codes the model can predict. */
   naics: string[];
+  /** Sector codes (2-digit, with BEACON's merged-sector ranges collapsed). */
   sectors: string[];
   sample_sizes: Record<string, number>;
+  /** NAICS codes belonging to each sector. */
   sector_naics: Record<string, string[]>;
-  // sparse: {sector: {ngram: {naicsCode: proportion}}}, nonzero entries only
+  /** `{sector: {ngram: {naicsCode: proportion}}}`, nonzero entries only. */
   dict_ncombs_props: Record<string, Record<string, Record<string, number>>>;
   dict_ncombs_weights: Record<string, Record<string, number>>;
+  /** `{sector: {exactMatch: {naicsCode: proportion}}}`, nonzero entries only. */
   dict_ems_props: Record<string, Record<string, Record<string, number>>>;
   dict_ems_weights: Record<string, Record<string, number>>;
 }
 
+/** A single NAICS code with its model confidence score. */
 export interface NaicsScore {
+  /** 6-digit NAICS code. */
   naics: string;
+  /** Model confidence, `[0,1]`. */
   score: number;
 }
 
@@ -66,9 +81,11 @@ function normScores(scoresRaw: Record<string, number>): Record<string, number> {
   return out;
 }
 
+/** TS port of BEACON's fitted-inference path — predicts NAICS codes from free text. */
 export class BeaconModel {
   private readonly params: BeaconParams;
 
+  /** @param params Fitted model params, e.g. from `loadNaics()`. */
   constructor(params: BeaconParams) {
     this.params = params;
   }

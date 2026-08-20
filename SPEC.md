@@ -37,6 +37,7 @@ static page: free-text business description → client-side ONNX inference → 6
 - publish = CI, tag-triggered: push tag `naics-search-v*` → GH Actions: `vp install` → `vp check`/`vp test` → `tsdown` build → `npm publish --access public` via `NPM_TOKEN` secret. ⊥ publish on plain `main` push.
 - `packages/naics-search/README.md` published w/ pkg (npm listing) — ! cover: exported API docs (`search()`+drilldown fns, param/return shapes), caveats (browser-DOM-free but dynamic-import data load, bundle size, sparse-model tradeoffs per §C model constraints), simple usage example, link back to this repo (https://github.com/krcourville/naics-code-resolver), release steps (bump version → commit → tag `naics-search-vX.Y.Z` → push tag).
 - ? `NPM_TOKEN` secret must be added manually to repo GitHub settings — outside spec/build scope, user action.
+- every `packages/naics-search/src/index.ts` export (fns, classes, methods, exported types/interfaces incl. fields) ! carry a TSDoc comment (`/** ... */`) — params/return documented where non-obvious. `vp pack --dts` ships these into `dist/index.d.mts`, consumer IDE hover = only API doc surface beyond README.
 
 ## §R RESEARCH
 
@@ -172,6 +173,7 @@ T62|x|write `packages/naics-search/README.md`: exported API docs, caveats, simpl
 T63|x|add `.github/workflows/publish-naics-search.yml` — tag-triggered build+publish to npm|V25
 T64|.|manual: add `NPM_TOKEN` secret to repo GitHub settings|-
 T65|x|add React + react-dom deps, `@vitejs/plugin-react`, `.tsx` build config — root `package.json` only, ⊥ `packages/naics-search` (keeps §C.30 pkg minimal-deps)|-
+T66|x|add TSDoc to every `packages/naics-search/src/index.ts` export lacking one (fns, `BeaconModel` ctor+methods, `SearchResult`/`BeaconParams`/`NaicsScore`/`DrillOption`/`HierarchyNode` fields) — verify via `dist/index.d.mts` after build|T58,I
 
 ## §B BUGS
 

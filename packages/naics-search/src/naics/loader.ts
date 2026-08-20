@@ -1,8 +1,10 @@
 import { BeaconModel, type BeaconParams } from "./beacon-model.ts";
 import { flattenHierarchy, type HierarchyTree } from "./hierarchy.ts";
 
+/** Resolved model + hierarchy data, ready to predict and drill down with. */
 export interface LoadedNaics {
   model: BeaconModel;
+  /** code -> title, flattened across every level of the hierarchy. */
   titles: Map<string, string>;
   hierarchy: HierarchyTree;
 }
