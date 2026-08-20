@@ -11,6 +11,29 @@ export interface LoadedNaics {
 
 let loadPromise: Promise<LoadedNaics> | undefined;
 
+// Plain Node requires `with { type: "json" }` on a real (unbundled) .json dynamic
+// import (throws ERR_IMPORT_ATTRIBUTE_MISSING otherwise). Vite's dev server does the
+// opposite — it serves `.json?import` as a JS module, which conflicts with the native
+// JSON-module MIME check the attribute triggers. Try plain first (bundlers/Vite), retry
+// with the attribute only on Node's specific error, so both environments work.
+async function importJson<T>(path: string): Promise<{ default: T }> {
+  try {
+    return (await import(/* @vite-ignore */ path)) as { default: T };
+  } catch (err) {
+    if (
+      err &&
+      typeof err === "object" &&
+      "code" in err &&
+      err.code === "ERR_IMPORT_ATTRIBUTE_MISSING"
+    ) {
+      return (await import(/* @vite-ignore */ path, { with: { type: "json" } })) as {
+        default: T;
+      };
+    }
+    throw err;
+  }
+}
+
 /**
  * Kicks off the model+hierarchy import exactly once; every caller (mount,
  * plus any submit that races ahead of load) awaits the same in-flight
@@ -21,8 +44,8 @@ let loadPromise: Promise<LoadedNaics> | undefined;
 export function loadNaics(): Promise<LoadedNaics> {
   loadPromise ??= (async () => {
     const [{ default: params }, { default: hierarchy }] = await Promise.all([
-      import("../data/naics-model.json") as Promise<{ default: BeaconParams }>,
-      import("../data/naics-hierarchy.json") as Promise<{ default: HierarchyTree }>,
+      importJson<BeaconParams>("../data/naics-model.json"),
+      importJson<HierarchyTree>("../data/naics-hierarchy.json"),
     ]);
     return { model: new BeaconModel(params), titles: flattenHierarchy(hierarchy), hierarchy };
   })();

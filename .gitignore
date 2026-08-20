@@ -40,3 +40,7 @@ dist-ssr
 # scripts/build-hierarchy.py downloads, scripts/*.py bytecode cache
 scripts/.naics_*.xlsx
 scripts/__pycache__/
+
+# build copy of packages/naics-search/src/data, package-root-level (matches
+# dist/index.mjs's unrewritten relative import path — see loader.ts)
+packages/naics-search/data/

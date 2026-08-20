@@ -11,6 +11,7 @@
   },
   "files": [
     "dist",
+    "data",
     "README.md"
   ],
   "type": "module",
@@ -23,6 +24,6 @@
     }
   },
   "scripts": {
-    "build": "vp pack && cp -r src/data dist/data"
+    "build": "vp pack && cp -r src/data data"
   }
 }
