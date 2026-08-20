@@ -213,7 +213,7 @@ function CandidateCard({
         {node?.definition && <p className="definition">{node.definition}</p>}
       </button>
       <a className="census-link" href={censusUrl(candidate.naics)} target="_blank" rel="noopener">
-        View on census.gov
+        View {candidate.naics} on census.gov
       </a>
     </li>
   );
@@ -366,7 +366,7 @@ function ListQA({
                 {showDef && node?.definition && <p className="definition">{node.definition}</p>}
               </button>
               <a className="census-link" href={censusUrl(c.naics)} target="_blank" rel="noopener">
-                View on census.gov
+                View {c.naics} on census.gov
               </a>
             </li>
           );

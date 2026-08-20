@@ -151,9 +151,11 @@ test("result panel and Q&A candidates link to census.gov, opened in a new tab", 
   const resultLink = page.locator("#naics-result .census-link");
   await expect(resultLink).toHaveAttribute("href", /census\.gov\/naics\/\?input=\d{6}/);
   await expect(resultLink).toHaveAttribute("target", "_blank");
+  await expect(resultLink).toHaveText(/\d{6}/); // link text includes the naics code
 
   await page.locator('#naics-qa button[data-group="42"]').click();
   const candidateLink = page.locator("#naics-qa .census-link").first();
   await expect(candidateLink).toHaveAttribute("href", /census\.gov\/naics\/\?input=\d{6}/);
   await expect(candidateLink).toHaveAttribute("target", "_blank");
+  await expect(candidateLink).toHaveText(/\d{6}/);
 });
