@@ -1,6 +1,6 @@
 {
   "name": "@cajuncodemonkey/naics-search",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "Free-text business description -> NAICS code search + drilldown Q&A, ported from the BEACON model.",
   "homepage": "https://github.com/krcourville/naics-code-resolver#readme",
   "license": "MIT",
