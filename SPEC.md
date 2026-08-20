@@ -106,7 +106,7 @@ V25: publish workflow ! run only on tag push matching `naics-search-v*`, ⊥ on 
 V26: `scripts/build-model.py` & `build-hierarchy.py` `--out` default ! diverge from path pkg loader actually reads — single declared data path, ⊥ manual dual-location sync (guards T59).
 V27: React rewrite (T61) ! regress `e2e/resolver.spec.ts`|`e2e/settings.spec.ts` — DOM/selectors preserved or e2e updated same commit, `vp test:e2e` green required before T61 flips `x`.
 V28: user ! left w/o feedback while model/hierarchy loading (§V4/§V5) or a submit in-flight — visible busy/loading indicator shown both cases, ⊥ blank/static UI during multi-second cold load (measured ~4.5-6s, T59 caveat).
-V29: result panel & Q&A candidate views (tree/list/card) ! show a census.gov link (pkg `censusUrl()`) for the displayed code, opens new tab (`target="_blank" rel="noopener"`, matching existing header/footer link pattern).
+V29: result panel & Q&A candidate views (tree/list/card) ! show a census.gov link (pkg `censusUrl()`) for the displayed code, opens new tab (`target="_blank" rel="noopener"`, matching existing header/footer link pattern). link text ! include the naics code (⊥ bare "View on census.gov" — ambiguous when multiple candidates/rows on screen at once).
 
 ## §T TASKS
 
