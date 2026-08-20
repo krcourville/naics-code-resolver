@@ -24,8 +24,10 @@ jobs:
           registry-url: https://registry.npmjs.org
       - run: npm install -g npm@latest # trusted publishing needs npm >=11.5.1
       - run: pnpm install --frozen-lockfile
+      # app imports "@cajuncodemonkey/naics-search" by name (resolves to dist/) — must
+      # build the pkg before check/test can type-check or run the app's own tests.
+      - run: pnpm --filter @cajuncodemonkey/naics-search run build
       - run: pnpm exec vp check
       - run: pnpm exec vp test
-      - run: pnpm --filter @cajuncodemonkey/naics-search run build
       - run: npm publish --access public --provenance
         working-directory: packages/naics-search

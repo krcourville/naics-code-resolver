@@ -110,6 +110,7 @@ V27: React rewrite (T61) ! regress `e2e/resolver.spec.ts`|`e2e/settings.spec.ts`
 V28: user ! left w/o feedback while model/hierarchy loading (§V4/§V5) or a submit in-flight — visible busy/loading indicator shown both cases, ⊥ blank/static UI during multi-second cold load (measured ~4.5-6s, T59 caveat).
 V29: result panel & Q&A candidate views (tree/list/card) ! show a census.gov link (pkg `censusUrl()`) for the displayed code, opens new tab (`target="_blank" rel="noopener"`, matching existing header/footer link pattern). link text ! include the naics code (⊥ bare "View on census.gov" — ambiguous when multiple candidates/rows on screen at once).
 V30: `packages/naics-search/src/data/*.json` ! stay compact (no pretty-print whitespace) — `vite.config.ts` `fmt.ignorePatterns` ! exclude that dir, so `vp check --fix`/staged-file formatting never re-inflates generated data (guards T59/B4).
+V31: `.github/workflows/publish-naics-search.yml` ! build `packages/naics-search` (produces `dist/`, which app imports resolve to) BEFORE `vp check`/`vp test` run — CI starts from a clean checkout w/ no pre-existing `dist/`, ⊥ rely on a locally-built one (guards B5).
 
 ## §T TASKS
 
@@ -191,3 +192,4 @@ B1|2026-08-14|BeaconModel = custom sklearn BaseEstimator (hand-rolled clean_text
 B2|2026-08-14|naics-model.json dense per-sector float arrays ~98.8% zero → 391MB real-data artifact, unshippable|sparse {naicsCode:prop} encoding + rounding + compact JSON → 35.5MB/5.5MB gzip (§C,§I,V7,T12,T13)
 B3|2026-08-14|Q&A hardcoded to start hierarchy drill-down at root (src/main.ts renderQA call), discarding model's own top-N candidates → ambiguous input ("hvac": 238220 .65, 423730 .35) forces full 20-sector browse instead of showing the 2 codes already found|V9,T14
 B4|2026-08-19|`vite.config.ts` `staged: {"*": "vp check --fix"}` glob + `fmt.ignorePatterns` missing pkg data dir → oxfmt pretty-printed `naics-model.json`/`naics-hierarchy.json` on every commit since T58/T59 move, silently inflating them 26-29% (build-model.py/build-hierarchy.py already export compact) despite §C's "compact JSON" claim|V30
+B5|2026-08-19|`publish-naics-search.yml` ran `vp check`/`vp test` before building `packages/naics-search` → fresh CI checkout has ⊥ `dist/`, app's `@cajuncodemonkey/naics-search` import unresolvable, first real workflow run failed at `vp check` (only worked locally because `dist/` was already built from earlier manual runs)|V31
