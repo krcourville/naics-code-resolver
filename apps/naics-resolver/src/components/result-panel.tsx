@@ -1,5 +1,6 @@
 import { censusUrl, getNode, type HierarchyTree } from "@cajuncodemonkey/naics-search";
 import { CONFIDENCE_EMOJI } from "../naics/confidence.ts";
+import { Button } from "./ui/button.tsx";
 
 export function ResultPanel({
   code,
@@ -36,9 +37,15 @@ export function ResultPanel({
       <a className="census-link" href={censusUrl(code)} target="_blank" rel="noopener">
         View {code} on census.gov
       </a>
-      <button type="button" id="naics-try-again" onClick={onTryAgain}>
+      <Button
+        type="button"
+        id="naics-try-again"
+        variant="link"
+        className="mt-4 block h-auto p-0"
+        onClick={onTryAgain}
+      >
         🔄 See other matches
-      </button>
+      </Button>
     </div>
   );
 }

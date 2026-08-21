@@ -12,6 +12,8 @@ import { HierarchyQA } from "./components/hierarchy-qa.tsx";
 import { ListQA } from "./components/list-qa.tsx";
 import { ResultPanel } from "./components/result-panel.tsx";
 import { TreeQA } from "./components/tree-qa.tsx";
+import { Button } from "./components/ui/button.tsx";
+import { Textarea } from "./components/ui/textarea.tsx";
 import { classifyConfidence } from "./naics/confidence.ts";
 import { filterByFloor } from "./naics/floor.ts";
 import {
@@ -218,9 +220,10 @@ export default function App() {
       <section id="resolver">
         <p>What does your business do? Type it below — we'll figure out the code.</p>
         <form id="naics-form" onSubmit={onFormSubmit}>
-          <textarea
+          <Textarea
             id="naics-input"
             rows={2}
+            className="max-h-[200px] resize-none overflow-y-auto"
             placeholder="e.g. retail bakery"
             ref={textareaRef}
             value={term}
@@ -228,12 +231,18 @@ export default function App() {
             onKeyDown={onInputKeyDown}
           />
           <div id="naics-form-actions">
-            <button id="naics-submit" type="submit">
+            <Button id="naics-submit" type="submit" className="flex-1">
               Find code
-            </button>
-            <button id="naics-clear" type="button" disabled={term.length === 0} onClick={onClear}>
+            </Button>
+            <Button
+              id="naics-clear"
+              type="button"
+              variant="outline"
+              disabled={term.length === 0}
+              onClick={onClear}
+            >
               Clear
-            </button>
+            </Button>
           </div>
         </form>
         <a

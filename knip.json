@@ -1,12 +1,20 @@
 {
   "$schema": "https://unpkg.com/knip@6/schema.json",
-  "ignoreDependencies": ["@arethetypeswrong/core", "publint"],
+  "ignoreDependencies": [
+    "@arethetypeswrong/core",
+    "publint",
+    "tailwindcss",
+    "tw-animate-css",
+    "shadcn",
+    "lucide-react"
+  ],
   "workspaces": {
     ".": {
       "project": ["scripts/**/*.ts", "e2e/**/*.ts"]
     },
     "apps/naics-resolver": {
-      "project": ["src/**/*.{ts,tsx}"]
+      "project": ["src/**/*.{ts,tsx}"],
+      "ignore": ["src/components/ui/**"]
     },
     "packages/naics-search": {
       "entry": ["src/index.ts", "src/naics/fs-provider.ts"],
