@@ -268,7 +268,7 @@ code {
     gap: 6px;
   }
 
-  button {
+  button:not([data-slot="checkbox"]) {
     width: 100%;
     text-align: left;
     font: inherit;
