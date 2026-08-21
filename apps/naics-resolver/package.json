@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@cajuncodemonkey/naics-search": "workspace:*",
+    "@cajuncodemonkey/naics-search-react": "workspace:*",
     "react": "^19.2.0",
     "react-dom": "^19.2.0"
   }

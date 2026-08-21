@@ -11,9 +11,9 @@ import {
   type LoadedNaics,
   type NaicsScore,
 } from "@cajuncodemonkey/naics-search";
+import { useNaicsSearch } from "@cajuncodemonkey/naics-search-react";
 import { classifyConfidence } from "./naics/confidence.ts";
 import { filterByFloor } from "./naics/floor.ts";
-import { loadSpike, loadSpikeReal } from "./naics/spike.ts";
 import {
   clampFloor,
   loadSettings,
@@ -383,7 +383,6 @@ export default function App() {
     loadSettings(new URLSearchParams(location.search)),
   );
   const [term, setTerm] = useState(initialTerm);
-  const [loaded, setLoaded] = useState<LoadedNaics | null>(null);
   const [result, setResult] = useState<ResultState | null>(null);
   const [noMatch, setNoMatch] = useState(false);
   const [pending, setPending] = useState(false);
@@ -391,20 +390,13 @@ export default function App() {
   const [lastSearch, setLastSearch] = useState<LastSearch | null>(null);
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  // T70: `?spike=1` (tiny fixture) / `?spike=real` (fetch() real data, README escape hatch) in
-  // dev bypass loadNaics() for manual UX testing.
-  const spikeMode = import.meta.env.DEV ? new URLSearchParams(location.search).get("spike") : null;
-  const loadedRef = useRef<Promise<LoadedNaics>>(
-    spikeMode === "1" ? loadSpike() : spikeMode === "real" ? loadSpikeReal() : loadNaics(),
-  ); // kicked off on mount, never awaited by input handling (§V4)
+  // §V4/§V5: kicked off on mount (main.tsx wires spike mode in first, T70), never
+  // awaited by input handling — submit before load done just awaits it (below).
+  const naics = useNaicsSearch();
   const autoRanRef = useRef(false);
 
   useEffect(() => {
     saveSettings(settings); // §V15: URL/localStorage always reflect the effective (merged) settings.
-  }, []);
-
-  useEffect(() => {
-    void loadedRef.current.then(setLoaded);
   }, []);
 
   // Auto-grow with content so longer descriptions stay fully visible while typing.
@@ -419,12 +411,12 @@ export default function App() {
   // §V16: `term` query param on load prefills the input and auto-runs the search
   // once model/hierarchy load finishes (§V5), so a shared URL reproduces its result.
   useEffect(() => {
-    if (initialTerm && loaded && !autoRanRef.current) {
+    if (initialTerm && naics.status === "ready" && !autoRanRef.current) {
       autoRanRef.current = true;
-      void handleSubmit(initialTerm, loaded);
+      void handleSubmit(initialTerm, naics);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [loaded]);
+  }, [naics.status]);
 
   function startQA(candidates: NaicsScore[], s: Settings) {
     const pool = filterByFloor(candidates, s.floor); // §V18: raw scores already classified; floor only narrows display
@@ -451,7 +443,7 @@ export default function App() {
   async function handleSubmit(text: string, resources?: LoadedNaics) {
     setPending(true); // §V28: visible feedback while a submit is in-flight (mostly the §V5 load-wait case)
     try {
-      const { model } = resources ?? (await loadedRef.current); // §V5: await in-flight load, never drop/error
+      const { model } = resources ?? (await loadNaics()); // §V5: await in-flight load, never drop/error
       setQa(null);
       const top = model.predictTopN(text, 5);
       if (top.length === 0) {
@@ -575,23 +567,28 @@ export default function App() {
         >
           💡 How does it work?
         </a>
-        {!loaded && (
+        {naics.status === "loading" && (
           <p id="naics-loading" role="status">
             ⏳ Loading NAICS model…
           </p>
         )}
-        {pending && loaded && (
+        {naics.status === "error" && (
+          <p id="naics-error" role="alert">
+            ⚠️ Couldn't load NAICS data. Check your connection and reload the page to try again.
+          </p>
+        )}
+        {pending && naics.status === "ready" && (
           <p id="naics-pending" role="status">
             ⏳ Finding code…
           </p>
         )}
-        {result && loaded && (
+        {result && naics.status === "ready" && (
           <ResultPanel
             code={result.code}
             score={result.score}
             label={result.label}
-            hierarchy={loaded.hierarchy}
-            titles={loaded.titles}
+            hierarchy={naics.hierarchy}
+            titles={naics.titles}
             onTryAgain={() => {
               if (lastSearch) startQA(lastSearch.candidates, settings);
             }}
@@ -602,25 +599,25 @@ export default function App() {
             <p>No match found. Try a different description.</p>
           </div>
         )}
-        {qa && loaded && qa.type === "hierarchy" && (
+        {qa && naics.status === "ready" && qa.type === "hierarchy" && (
           <HierarchyQA
-            hierarchy={loaded.hierarchy}
+            hierarchy={naics.hierarchy}
             path={qa.path}
             onNavigate={(path) => setQa({ type: "hierarchy", path })}
             onOptionClick={(code) => {
-              if (isResolved(loaded.hierarchy, code)) {
+              if (isResolved(naics.hierarchy, code)) {
                 pickResult(code, 1, "high"); // §V3: confirmed leaf is a valid 6-digit code
               } else {
-                const title = getNode(loaded.hierarchy, code)!.title;
+                const title = getNode(naics.hierarchy, code)!.title;
                 setQa({ type: "hierarchy", path: [...qa.path, { code, title }] });
               }
             }}
           />
         )}
-        {qa && loaded && qa.type === "tree" && (
+        {qa && naics.status === "ready" && qa.type === "tree" && (
           <TreeQA
-            hierarchy={loaded.hierarchy}
-            titles={loaded.titles}
+            hierarchy={naics.hierarchy}
+            titles={naics.titles}
             stack={qa.stack}
             onNavigate={(stack) => setQa({ type: "tree", stack })}
             onPick={(code, score) =>
@@ -629,11 +626,11 @@ export default function App() {
             onBrowseFull={() => setQa({ type: "hierarchy", path: [] })}
           />
         )}
-        {qa && loaded && qa.type === "list" && (
+        {qa && naics.status === "ready" && qa.type === "list" && (
           <ListQA
             candidates={qa.pool}
-            hierarchy={loaded.hierarchy}
-            titles={loaded.titles}
+            hierarchy={naics.hierarchy}
+            titles={naics.titles}
             showDef={settings.showDef}
             onToggleShowDef={(checked) => applySettings({ ...settings, showDef: checked })}
             onPick={(code, score) =>

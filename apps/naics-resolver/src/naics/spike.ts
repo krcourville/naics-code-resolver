@@ -1,8 +1,8 @@
-import {
-  BeaconModel,
-  type BeaconParams,
-  type HierarchyTree,
-  type LoadedNaics,
+import type {
+  BeaconParams,
+  DataProvider,
+  HierarchyTree,
+  NaicsData,
 } from "@cajuncodemonkey/naics-search";
 import spikeParams from "./spike-fixture.json";
 
@@ -46,44 +46,26 @@ const SPIKE_HIERARCHY: HierarchyTree = {
   },
 };
 
-function flattenTitles(tree: HierarchyTree): Map<string, string> {
-  const titles = new Map<string, string>();
-  const visit = (node: HierarchyTree[string]) => {
-    titles.set(node.code, node.title);
-    for (const child of Object.values(node.children)) visit(child);
-  };
-  for (const node of Object.values(tree)) visit(node);
-  return titles;
-}
+/**
+ * T70: skips the real 34MB model fetch — a {@link DataProvider} wired in via
+ * `configureDataProvider()` (dev-only, README escape hatch equivalent).
+ */
+export const spikeProvider: DataProvider = () =>
+  Promise.resolve({ params: spikeParams as BeaconParams, hierarchy: SPIKE_HIERARCHY });
 
-/** T70: skips loadNaics()'s 33MB model fetch — direct BeaconModel(customParams), README escape hatch. */
-export function loadSpike(): Promise<LoadedNaics> {
-  return Promise.resolve({
-    model: new BeaconModel(spikeParams as BeaconParams),
-    hierarchy: SPIKE_HIERARCHY,
-    titles: flattenTitles(SPIKE_HIERARCHY),
-  });
-}
-
-// T70: real-data variant of the README's "skip loadNaics(), construct BeaconModel
-// yourself" escape hatch — fetch() the pkg's own data files (dev server serves
-// any file under project root once base-prefixed, verified via curl) instead of
-// loadNaics()'s dynamic import. Dev-only: prod build only copies public/ verbatim,
-// this path isn't available there.
-let spikeRealPromise: Promise<LoadedNaics> | undefined;
-
-export function loadSpikeReal(): Promise<LoadedNaics> {
-  spikeRealPromise ??= (async () => {
-    const base = import.meta.env.BASE_URL;
-    const [params, hierarchy] = await Promise.all([
-      fetch(`${base}packages/naics-search/src/data/naics-model.json`).then(
-        (r) => r.json() as Promise<BeaconParams>,
-      ),
-      fetch(`${base}packages/naics-search/src/data/naics-hierarchy.json`).then(
-        (r) => r.json() as Promise<HierarchyTree>,
-      ),
-    ]);
-    return { model: new BeaconModel(params), hierarchy, titles: flattenTitles(hierarchy) };
-  })();
-  return spikeRealPromise;
-}
+// T70: real-data variant — fetch() the pkg's own source data files (dev server
+// serves any file under project root once base-prefixed, verified via curl)
+// instead of the default remote provider. Dev-only: prod build only copies
+// public/ verbatim, this path isn't available there.
+export const spikeRealProvider: DataProvider = async () => {
+  const base = import.meta.env.BASE_URL;
+  const [params, hierarchy] = await Promise.all([
+    fetch(`${base}packages/naics-search/src/data/naics-model.json`).then(
+      (r) => r.json() as Promise<BeaconParams>,
+    ),
+    fetch(`${base}packages/naics-search/src/data/naics-hierarchy.json`).then(
+      (r) => r.json() as Promise<HierarchyTree>,
+    ),
+  ]);
+  return { params, hierarchy } satisfies NaicsData;
+};

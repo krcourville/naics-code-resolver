@@ -15,7 +15,7 @@ type Status =
   | { status: "error"; error: unknown }
   | ({ status: "ready" } & Ready);
 
-interface Ready {
+interface Ready extends LoadedNaics {
   search: typeof search;
   drilldownOptions: typeof drilldownOptions;
   getNode: typeof getNode;
@@ -24,16 +24,17 @@ interface Ready {
   censusUrl: typeof censusUrl;
 }
 
-function toReady(_loaded: LoadedNaics): Ready {
-  return { search, drilldownOptions, getNode, isResolved, getAncestorPath, censusUrl };
+function toReady(loaded: LoadedNaics): Ready {
+  return { ...loaded, search, drilldownOptions, getNode, isResolved, getAncestorPath, censusUrl };
 }
 
 /**
  * Thin React wrapper over `@cajuncodemonkey/naics-search`'s `loadNaics()`
  * load-state — `status` starts `'loading'`, moves to `'error'` (network/data
- * fetch failed, §V49) or `'ready'` (search()/drilldown fns available). Owns
- * no app policy (confidence bands, settings, Q&A UI) — that stays in the
- * consuming app.
+ * fetch failed, §V49) or `'ready'` (the resolved `LoadedNaics` — model,
+ * hierarchy, titles — plus `search()`/drilldown fns available). Owns no app
+ * policy (confidence bands, settings, Q&A UI) — that stays in the consuming
+ * app.
  */
 export function useNaicsSearch(): Status {
   const [state, setState] = useState<Status>({ status: "loading" });
