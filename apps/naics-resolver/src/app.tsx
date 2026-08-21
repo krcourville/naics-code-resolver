@@ -132,7 +132,10 @@ export default function App() {
             onChange={(e) => setTerm(e.target.value)}
             onKeyDown={onInputKeyDown}
           />
-          <div id="naics-form-actions" className="flex flex-col gap-2 sm:flex-row sm:justify-end">
+          <div id="naics-form-actions" className="flex flex-col gap-2 sm:flex-row">
+            <Button id="naics-submit" type="submit" className="w-full sm:w-auto">
+              Search
+            </Button>
             <Button
               id="naics-clear"
               type="button"
@@ -143,9 +146,6 @@ export default function App() {
               onClick={onClear}
             >
               Clear
-            </Button>
-            <Button id="naics-submit" type="submit" className="w-full sm:w-auto">
-              Find code
             </Button>
           </div>
         </form>
