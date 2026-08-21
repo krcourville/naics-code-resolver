@@ -2,8 +2,10 @@
 
 Free-text business description → ranked [NAICS](https://www.census.gov/naics/) code
 matches, plus the building blocks for a confidence-driven clarifying Q&A flow. Ported
-from the [BEACON](https://github.com/uscensusbureau/BEACON) model — no network calls,
-no server, runs entirely client-side.
+from the [BEACON](https://github.com/uscensusbureau/BEACON) model — inference itself
+runs entirely client-side, no server/backend. The ~34MB model+hierarchy data is **not**
+bundled in this package; it's fetched over the network the first time you call
+`search()`/`loadNaics()` (see [Data loading](#data-loading) below).
 
 Built for [naics-code-resolver](https://github.com/krcourville/naics-code-resolver),
 a free-text NAICS code lookup tool. See that repo for the full resolver UI this
@@ -27,9 +29,8 @@ const results = await search("retail bakery");
 //    score: 0.87 }, ...]
 ```
 
-`search()` is async on every call, but only pays the (~40MB) model+hierarchy load cost
-once — the first call kicks it off, every concurrent/later call awaits the same
-in-flight load.
+`search()` is async on every call, but only pays the model+hierarchy load cost once —
+the first call kicks it off, every concurrent/later call awaits the same in-flight load.
 
 ## API
 
@@ -85,28 +86,65 @@ const node = getNode(hierarchy, "238220"); // { title, definition?, examples?, c
 - `getAncestorPath(tree, code)` — root-to-node `{code,title}[]` chain, for breadcrumbs.
 - `getNode(tree, code)` — full node (`title`, `definition?`, `examples?`, `children`).
 
-Don't want the bundled ~40MB dataset, or want to host/version it yourself? Skip
-`loadNaics()` and construct `BeaconModel` directly with your own params — `new
-BeaconModel(customParams)`, where `customParams` matches the exported `BeaconParams`
-shape. This is the same data `scripts/build-model.py` in the main repo exports.
+Want your own data (BEACON-refit params, or a different vintage), or to construct the
+model without going through `loadNaics()`/any provider at all? Construct `BeaconModel`
+directly — `new BeaconModel(customParams)`, where `customParams` matches the exported
+`BeaconParams` shape. This is the same data `scripts/build-model.py` in the main repo
+exports.
+
+## Data loading
+
+`search()`/`loadNaics()`/the drilldown fns all need the ~34MB model+hierarchy data, which
+is **not** in this package's install — it's fetched at runtime the first time you call
+any of them. By default that fetch goes to
+[unpkg](https://unpkg.com) (`@cajuncodemonkey/naics-search-data`, a tiny sibling package
+that exists only to give unpkg a tarball to serve — you never install it directly),
+falling back automatically to a raw GitHub Release download if unpkg fails for any
+reason. If both fail, the `loadNaics()`/`search()` promise rejects — handle that like
+any other failed fetch.
+
+### Overriding the data source
+
+Call `configureDataProvider()` once, before your first `search()`/`loadNaics()` call:
+
+```ts
+import { configureDataProvider } from "@cajuncodemonkey/naics-search";
+
+configureDataProvider(async () => ({
+  params: /* your BeaconParams */,
+  hierarchy: /* your HierarchyTree */,
+}));
+```
+
+A `DataProvider` is just `() => Promise<{ params: BeaconParams; hierarchy: HierarchyTree }>`
+— fetch it from wherever you like. For Node consumers (scripts, tests, self-hosted/offline
+setups) a ready-made filesystem provider ships as a separate entry point so `node:fs`
+never lands in a browser bundle:
+
+```ts
+import { configureDataProvider } from "@cajuncodemonkey/naics-search";
+import { fsDataProvider } from "@cajuncodemonkey/naics-search/fs-provider";
+
+configureDataProvider(
+  fsDataProvider({ model: "./naics-model.json", hierarchy: "./naics-hierarchy.json" }),
+);
+```
 
 ## Caveats
 
-- **Data size.** The bundled model + hierarchy are ~40MB uncompressed (~5.5MB gzip over
-  the wire). They ship as static `.json` files alongside the package (not inlined into
-  the JS bundle) so your bundler's native JSON parsing handles them — inlining as JS
-  source measurably slowed cold loads in testing. A cold first `search()`/`loadNaics()`
-  call still typically takes a few seconds. **Make sure your web server/CDN compresses
-  `.json` responses** (gzip or brotli) — that ~7x size difference is the gap between
-  a multi-second cold load and a much longer one; some static hosts don't compress
-  `.json` by default the way they do `.js`/`.css`.
+- **Network required by default.** Unlike versions before 2.0, this package ships no
+  data — the first `search()`/`loadNaics()` call needs network access (unpkg, falling
+  back to a GitHub Release download) unless you supply your own provider. Offline/
+  air-gapped consumers should use `configureDataProvider()` with the fs provider (or
+  their own) pointed at a locally-obtained copy of the data.
 - **Sparse model, not exhaustive.** The underlying BeaconModel keeps only nonzero
   n-gram → NAICS proportions (~98.8% of the dense form is zero); scores are a purity-
   weighted heuristic over 2017/2022 Census training data, not a guarantee — always
   treat `score` as a confidence signal, not ground truth.
-- **No DOM dependency beyond dynamic `import()`.** Works in Node and in any bundler
-  that supports dynamic import of JSON (Vite, Rollup/Rolldown, webpack, esbuild). It
-  does not use `fetch`, `localStorage`, or any other browser-only global.
+- **Main entry stays DOM-free.** The package itself (and its default data provider) only
+  uses `fetch` — no `document`/`window`/other browser-only globals — so it works in
+  Node 18+ and any bundler target alike. The Node-only `fs-provider` subpath is opt-in
+  and never pulled into a browser build unless you import it yourself.
 - **English business descriptions only.** No multi-language support.
 - **Static Q&A only.** Any drill-down UI you build on `drilldownOptions`/`getNode`
   should stay a static hierarchy browse — there's no model/LLM-generated question
