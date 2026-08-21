@@ -6,7 +6,7 @@ on:
       - "naics-search-v*"
 
 permissions:
-  contents: read
+  contents: write # V63: needed to create the GitHub Release + upload data assets
   id-token: write # npm trusted publishing (OIDC) — no NPM_TOKEN needed
 
 jobs:
@@ -25,5 +25,19 @@ jobs:
       - run: npm install -g npm@latest # trusted publishing needs npm >=11.5.1
       - run: pnpm install --frozen-lockfile
       - run: pnpm run check
-      - run: npm publish --access public --provenance
+      - name: Publish naics-search
+        run: npm publish --access public --provenance
         working-directory: packages/naics-search
+      - name: Build naics-search-data (mirrors naics-search's src/data into itself)
+        run: pnpm run build
+        working-directory: packages/naics-search-data
+      - name: Publish naics-search-data (V64 — version kept lockstep, same tag)
+        run: npm publish --access public --provenance
+        working-directory: packages/naics-search-data
+      - name: Create GitHub Release + attach data assets (V54/V63 fallback provider source)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "${{ github.ref_name }}" --title "${{ github.ref_name }}" --generate-notes \
+            packages/naics-search/src/data/naics-model.json \
+            packages/naics-search/src/data/naics-hierarchy.json
