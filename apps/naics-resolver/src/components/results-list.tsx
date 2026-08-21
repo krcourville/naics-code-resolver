@@ -36,7 +36,7 @@ export function ResultsList({
         return (
           <Item key={c.naics} variant="outline" className="items-start" data-code={c.naics}>
             <ItemContent>
-              <ItemTitle>
+              <ItemTitle className="items-start">
                 <span className="font-mono text-xs text-muted-foreground">{c.naics}</span>
                 {title}
               </ItemTitle>
