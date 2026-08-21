@@ -11,7 +11,6 @@
   },
   "files": [
     "dist",
-    "data",
     "README.md"
   ],
   "type": "module",
@@ -28,7 +27,7 @@
     }
   },
   "scripts": {
-    "build": "vp pack && rm -rf data && cp -r src/data data"
+    "build": "vp pack"
   },
   "devDependencies": {
     "@arethetypeswrong/core": "^0.18.5",

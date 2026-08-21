@@ -76,10 +76,10 @@ export function loadSpikeReal(): Promise<LoadedNaics> {
   spikeRealPromise ??= (async () => {
     const base = import.meta.env.BASE_URL;
     const [params, hierarchy] = await Promise.all([
-      fetch(`${base}packages/naics-search/data/naics-model.json`).then(
+      fetch(`${base}packages/naics-search/src/data/naics-model.json`).then(
         (r) => r.json() as Promise<BeaconParams>,
       ),
-      fetch(`${base}packages/naics-search/data/naics-hierarchy.json`).then(
+      fetch(`${base}packages/naics-search/src/data/naics-hierarchy.json`).then(
         (r) => r.json() as Promise<HierarchyTree>,
       ),
     ]);
