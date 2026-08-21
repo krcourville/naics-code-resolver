@@ -5,13 +5,13 @@
   "license": "MIT",
   "type": "module",
   "scripts": {
-    "dev": "pnpm --filter @cajuncodemonkey/naics-search run build && pnpm --filter naics-resolver run dev",
-    "build": "pnpm --filter @cajuncodemonkey/naics-search run build && pnpm --filter naics-resolver run build",
+    "dev": "pnpm --filter @cajuncodemonkey/naics-search run build && pnpm --filter @cajuncodemonkey/naics-search-react run build && pnpm --filter naics-resolver run dev",
+    "build": "pnpm --filter @cajuncodemonkey/naics-search run build && pnpm --filter @cajuncodemonkey/naics-search-react run build && pnpm --filter naics-resolver run build",
     "preview": "pnpm --filter naics-resolver run preview",
     "test:e2e": "playwright test",
     "infer": "node scripts/infer.ts",
     "lint:knip": "knip",
-    "check": "pnpm --filter @cajuncodemonkey/naics-search run build && vp check && vp test",
+    "check": "pnpm --filter @cajuncodemonkey/naics-search run build && pnpm --filter @cajuncodemonkey/naics-search-react run build && vp check && vp test",
     "prepare": "vp config"
   },
   "dependencies": {
