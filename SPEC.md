@@ -261,7 +261,7 @@ T76|x|enable tsdown `publint: true`+`attw: {profile: 'esm-only'}` on `packages/n
 T77|x|fix publint/attw findings surfaced by T76|T76,V39,V40
 T78|x|define data-provider contract type (e.g. `DataProvider`) in pkg src — async fn returning `{params: BeaconParams, hierarchy: HierarchyTree}`|V48
 T79|.|implement default provider: unpkg URL fetch (`@cajuncodemonkey/naics-search-data`) w/ auto-fallback → raw GitHub Release asset URL, using pkg's own version|V49,V53,V60
-T80|.|implement fs provider (local path → async read)|V51
+T80|x|implement fs provider (local path → async read)|V51
 T81|.|implement one-time global `configureDataProvider()` setter, wire into `loadNaics()` in place of old `importJson()` dynamic-import calls|V50,V48
 T82|.|strip bundled data from pkg: drop `data` from `package.json` `files`, remove `cp -r src/data data` build step — `src/data/*.json` stays in-repo (release-asset publish + app's own build still need it)|V47
 T83|.|`apps/naics-resolver` — no provider config, dogfoods default CDN provider|V52

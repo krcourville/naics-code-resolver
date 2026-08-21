@@ -21,6 +21,10 @@
     ".": {
       "types": "./dist/index.d.mts",
       "import": "./dist/index.mjs"
+    },
+    "./fs-provider": {
+      "types": "./dist/naics/fs-provider.d.mts",
+      "import": "./dist/naics/fs-provider.mjs"
     }
   },
   "scripts": {
