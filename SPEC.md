@@ -265,11 +265,11 @@ T80|x|implement fs provider (local path → async read)|V51
 T81|x|implement one-time global `configureDataProvider()` setter, wire into `loadNaics()` in place of old `importJson()` dynamic-import calls|V50,V48
 T82|x|strip bundled data from pkg: drop `data` from `package.json` `files`, remove `cp -r src/data data` build step — `src/data/*.json` stays in-repo (release-asset publish + app's own build still need it)|V47
 T83|x|`apps/naics-resolver` — no provider config, dogfoods default CDN provider|V52
-T84|.|add error UI state to loading indicator (T67) for `loadNaics()` rejection (both default hosts failed) — built directly on `useNaicsSearch()`'s `status:'error'` branch|V49,V58,I.ui,T90,T94
+T84|x|add error UI state to loading indicator (T67) for `loadNaics()` rejection (both default hosts failed) — built directly on `useNaicsSearch()`'s `status:'error'` branch|V49,V58,I.ui,T90,T94
 T85|x|extend `publish-naics-search.yml`: add `permissions: contents: write`, explicitly create/target the GitHub Release for the pushed tag, attach `naics-model.json`+`naics-hierarchy.json` as its assets, AND publish `@cajuncodemonkey/naics-search-data` to npm — all in same tag-triggered run (file/YAML verified locally — a real run needs an actual tag push, not exercised in this build)|V54,V63,V64
 T86|x|update `packages/naics-search/README.md` caveats: network-by-default data load, provider override, fs provider example, CDN fallback behavior|V49,V50,V51
 T87|x|verify via throwaway `npm install <tarball>` + real `search()` call: zero data files in installed pkg (confirmed, 52K unpacked incl. zero `.json` data), real `search()` via `fs-provider` subpath works end-to-end outside the workspace — real network fetch against the *published* unpkg release couldn't be exercised (nothing published yet), that leg needs a real tag push|V47,V49
-T88|.|Playwright: cover `loadNaics()` failure path (mock/block network) → app shows error state (T84), ⊥ blank/stuck-loading forever|T84,V49
+T88|x|Playwright: cover `loadNaics()` failure path (mock/block network) → app shows error state (T84), ⊥ blank/stuck-loading forever|T84,V49
 T89|x|scaffold `packages/naics-search-react/` workspace pkg, add to `pnpm-workspace.yaml`|-
 T90|x|implement `useNaicsSearch()` hook: loading/error/ready states, mounted-flag guard, re-export `search()`+drilldown fns @ ready|V55,V56,T89
 T91|x|configure `tsdown` build for pkg (ESM output), `react` as peerDependency|V57,T89

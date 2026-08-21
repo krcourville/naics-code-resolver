@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { test, expect } from "./mock-naics-data.ts";
 
 // §V16: shareable URL — `term` prefills + auto-runs the search.
 test("term query param prefills input and auto-runs search", async ({ page }) => {

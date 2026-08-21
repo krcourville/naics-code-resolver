@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { test, expect } from "./mock-naics-data.ts";
 import { TEST_CASES, type TestCaseCategory } from "../apps/naics-resolver/src/naics/test-cases.ts";
 
 const RESULT_RE = /confidence: (\d\.\d\d) \((high|medium|low)\)/;
