@@ -86,6 +86,9 @@ const node = getNode(hierarchy, "238220"); // { title, definition?, examples?, c
 - `getAncestorPath(tree, code)` — root-to-node `{code,title}[]` chain, for breadcrumbs.
 - `getNode(tree, code)` — full node (`title`, `definition?`, `examples?`, `children`).
 
+Using React? [`@cajuncodemonkey/naics-search-react`](https://www.npmjs.com/package/@cajuncodemonkey/naics-search-react)'s
+`useNaicsSearch()` hook wraps the load-state above for you.
+
 Want your own data (BEACON-refit params, or a different vintage), or to construct the
 model without going through `loadNaics()`/any provider at all? Construct `BeaconModel`
 directly — `new BeaconModel(customParams)`, where `customParams` matches the exported
@@ -154,6 +157,3 @@ configureDataProvider(
 
 MIT. BEACON (the model this package ports) is public domain (CC0 1.0) — see the
 [upstream license](https://github.com/uscensusbureau/BEACON/blob/main/LICENSE.md).
-
-See [CONTRIBUTING.md](https://github.com/krcourville/naics-code-resolver/blob/main/CONTRIBUTING.md)
-in the main repo for release steps.

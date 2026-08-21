@@ -1,12 +1,14 @@
 # NAICS Code Resolver
 
 A tool that resolves the 6-digit NAICS code for a business based on a
-free-text description, using a machine learning model, entirely in your web
-browser — no server, no API calls, no data leaves your machine.
+free-text description, using a machine learning model that runs entirely in
+your web browser — no inference server, no API call, your business
+description never leaves the machine.
 
 The model is a TypeScript port of the [Census Bureau's BEACON
 model](https://github.com/uscensusbureau/beacon). A ~5MB (gzipped) model
-file loads on page load and scores your description against all ~1,000
+file is fetched from a CDN on first use (unpkg, falling back to a GitHub
+Release download) and scores your description against all ~1,000
 six-digit NAICS codes using n-gram matching. High-confidence matches show
 the code directly; medium/low-confidence matches offer a drill-down Q&A,
 seeded from the model's own top candidates, to narrow down to a single
@@ -21,11 +23,17 @@ LLM.
 - **The app** (`apps/naics-resolver/`) — a React single-page app, the reference
   implementation above. State is plain React hooks, no routing/state library.
 - **[`@cajuncodemonkey/naics-search`](https://www.npmjs.com/package/@cajuncodemonkey/naics-search)**
-  (`packages/naics-search/`) — the resolver logic (model port, hierarchy drill-down)
-  and data, factored out as a standalone, framework-free npm package. The app above
-  is its own dogfooding React usage example; see the
-  [package README](packages/naics-search/README.md) for the API, or
-  [CONTRIBUTING.md](CONTRIBUTING.md) for release steps.
+  (`packages/naics-search/`) — the resolver logic (model port, hierarchy drill-down),
+  factored out as a standalone, framework-free npm package. Ships no data itself —
+  the model+hierarchy JSON is fetched at runtime (CDN by default, pluggable). See the
+  [package README](packages/naics-search/README.md) for the API.
+- **[`@cajuncodemonkey/naics-search-react`](https://www.npmjs.com/package/@cajuncodemonkey/naics-search-react)**
+  (`packages/naics-search-react/`) — a `useNaicsSearch()` React hook wrapping the
+  above package's load-state. The app above is its own dogfooding usage example.
+- **[`@cajuncodemonkey/naics-search-data`](https://www.npmjs.com/package/@cajuncodemonkey/naics-search-data)**
+  (`packages/naics-search-data/`) — data-only, never installed directly. Exists purely
+  so `naics-search`'s default CDN provider (unpkg) has a published tarball to serve.
+- See [CONTRIBUTING.md](CONTRIBUTING.md) for release steps across all three packages.
 
 ## How does it work?
 
@@ -52,8 +60,9 @@ the full official NAICS hierarchy from the top down (sector → subsector →
 
 This project is an experiment answering one question: **can a machine
 learning model run entirely in the web browser, with no backend?** No
-inference server, no API call, no data leaving the machine — just a model
-artifact fetched as a static file and scored in JS.
+inference server, no per-query API call, your input never leaving the
+machine — just a static model artifact fetched once from a CDN and scored
+in JS.
 
 ## Porting BEACON to the browser
 
@@ -146,6 +155,12 @@ pnpm dev                      # builds the naics-search pkg, then dev server at 
 Type a business description, get a 6-digit NAICS code + confidence.
 Low/medium confidence offers a drill-down Q&A to narrow it down.
 
+The dev server fetches model data from the live CDN by default (same as
+production). No network, or want a fast iteration loop that skips the ~5MB
+fetch entirely? Add `?spike=1` (tiny fixture) or `?spike=real` (real data,
+served locally by `vp dev`) to the URL — dev-only escape hatches, see
+`apps/naics-resolver/src/naics/spike.ts`.
+
 ### Tests
 
 ```bash
@@ -167,3 +182,7 @@ committed, not regenerated during build. To refit it manually:
 `python scripts/build-model.py` (needs the beacon submodule). `pnpm infer
 "<description>"` queries the committed model directly, useful for manual
 sanity checks.
+
+This committed file is also the single source published two other ways on
+each `naics-search` release: mirrored into `naics-search-data` (npm) and
+attached to the GitHub Release for that tag — see [CONTRIBUTING.md](CONTRIBUTING.md).
