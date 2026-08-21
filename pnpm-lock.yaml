@@ -253,6 +253,9 @@ importers:
       '@cajuncodemonkey/naics-search':
         specifier: workspace:*
         version: link:../../packages/naics-search
+      '@cajuncodemonkey/naics-search-react':
+        specifier: workspace:*
+        version: link:../../packages/naics-search-react
       react:
         specifier: ^19.2.0
         version: 19.2.8
