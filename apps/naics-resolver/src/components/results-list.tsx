@@ -36,9 +36,8 @@ export function ResultsList({
         return (
           <Item key={c.naics} variant="outline" className="items-start" data-code={c.naics}>
             <ItemContent>
-              <ItemTitle className="items-start">
-                <span className="font-mono text-xs text-muted-foreground">{c.naics}</span>
-                {title}
+              <ItemTitle className="line-clamp-none block w-full whitespace-normal">
+                {c.naics} {title}
               </ItemTitle>
               {showDef && node?.definition && (
                 <ItemDescription className="line-clamp-none">{node.definition}</ItemDescription>
