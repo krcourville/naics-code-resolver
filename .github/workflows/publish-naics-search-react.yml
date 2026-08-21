@@ -1,0 +1,31 @@
+name: Publish naics-search-react to npm
+
+on:
+  push:
+    tags:
+      - "naics-search-react-v*"
+
+permissions:
+  contents: read
+  id-token: write # npm trusted publishing (OIDC) — no NPM_TOKEN needed
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6.0.10
+        with:
+          version: 11.21.0
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+          cache: pnpm
+          registry-url: https://registry.npmjs.org
+      - run: npm install -g npm@latest # trusted publishing needs npm >=11.5.1
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run check # builds naics-search too (a real dep, needs dist/ to resolve)
+      - run: pnpm run build
+        working-directory: packages/naics-search-react
+      - run: npm publish --access public --provenance
+        working-directory: packages/naics-search-react
