@@ -2,7 +2,7 @@ import "./style.css";
 import { configureDataProvider } from "@cajuncodemonkey/naics-search";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
-import App from "./App.tsx";
+import App from "./app.tsx";
 import { spikeProvider, spikeRealProvider } from "./naics/spike.ts";
 
 // T70: `?spike=1` (tiny fixture) / `?spike=real` (fetch() real data, README

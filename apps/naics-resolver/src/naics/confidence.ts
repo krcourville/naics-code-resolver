@@ -2,6 +2,12 @@
  * Q&A whenever the top-2 scores are within .10 of each other, regardless of band. */
 type ConfidenceLabel = "high" | "medium" | "low";
 
+export const CONFIDENCE_EMOJI: Record<ConfidenceLabel, string> = {
+  high: "🟢",
+  medium: "🟡",
+  low: "🔴",
+};
+
 export interface Confidence {
   label: ConfidenceLabel;
   offerQA: boolean;

@@ -12,7 +12,7 @@ function dataFilePath(url: string): string {
  * real `@cajuncodemonkey/naics-search-data` package/GitHub Release doesn't
  * exist until a real tag is published (V61), so e2e can't hit the live CDN.
  */
-export async function mockNaicsData(page: Page): Promise<void> {
+async function mockNaicsData(page: Page): Promise<void> {
   await page.route("https://unpkg.com/@cajuncodemonkey/naics-search-data*/**", (route) =>
     route.fulfill({ path: dataFilePath(route.request().url()) }),
   );
