@@ -272,7 +272,7 @@ T87|x|verify via throwaway `npm install <tarball>` + real `search()` call: zero 
 T88|.|Playwright: cover `loadNaics()` failure path (mock/block network) → app shows error state (T84), ⊥ blank/stuck-loading forever|T84,V49
 T89|x|scaffold `packages/naics-search-react/` workspace pkg, add to `pnpm-workspace.yaml`|-
 T90|x|implement `useNaicsSearch()` hook: loading/error/ready states, mounted-flag guard, re-export `search()`+drilldown fns @ ready|V55,V56,T89
-T91|.|configure `tsdown` build for pkg (ESM output), `react` as peerDependency|V57,T89
+T91|x|configure `tsdown` build for pkg (ESM output), `react` as peerDependency|V57,T89
 T92|.|write `packages/naics-search-react/README.md`: API docs, usage example, link back to repo|T90
 T93|.|add `.github/workflows/publish-naics-search-react.yml` — tag-triggered (`naics-search-react-v*`) build+publish to npm, mirrors `publish-naics-search.yml`|T91
 T94|.|refactor `apps/naics-resolver` to consume `useNaicsSearch()` — replaces T67's manual load-effect|V58,T90
