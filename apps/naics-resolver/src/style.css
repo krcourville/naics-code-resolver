@@ -13,6 +13,10 @@
   --brand: #f27b57;
   --brand-bg: rgba(242, 123, 87, 0.12);
   --brand-border: rgba(242, 123, 87, 0.5);
+  /* WCAG AA text contrast (≥4.5:1) needs a darker orange than --brand for text-on-white
+     and white-text-on-orange-button use — --brand itself only passes as a large/decorative
+     accent, not body text. Theme-independent: buttons always carry white foreground. */
+  --link: #9a340c;
   --shadow: rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
 
   --sans: system-ui, "Segoe UI", Roboto, sans-serif;
@@ -42,7 +46,7 @@
   --card-foreground: var(--text-h);
   --popover: var(--bg);
   --popover-foreground: var(--text-h);
-  --primary: var(--brand);
+  --primary: #9a340c;
   --primary-foreground: oklch(1 0 0);
   --secondary: var(--code-bg);
   --secondary-foreground: var(--text-h);
@@ -67,6 +71,9 @@
     --brand-bg: rgba(255, 171, 145, 0.15);
     --brand-border: rgba(255, 171, 145, 0.5);
     --shadow: rgba(0, 0, 0, 0.4) 0 10px 15px -3px, rgba(0, 0, 0, 0.25) 0 4px 6px -2px;
+    /* dark mode's own --brand already clears 4.5:1 against the dark page bg, unlike light
+       mode's --brand against white — safe to use directly here instead of the button-tuned --link. */
+    --link: var(--brand);
   }
 }
 
@@ -76,11 +83,11 @@ body {
 }
 
 a {
-  color: var(--brand);
+  color: var(--link);
   text-decoration: none;
 
   &:visited {
-    color: var(--brand);
+    color: var(--link);
   }
   &:hover,
   &:focus-visible {

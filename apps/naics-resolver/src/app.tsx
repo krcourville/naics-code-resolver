@@ -119,14 +119,17 @@ export default function App() {
         <h1>NAICS Code Resolver</h1>
         <SettingsSheet settings={settings} onChange={applySettings} />
       </header>
-      <section id="resolver">
-        <p>What does your business do? Type it below — we'll figure out the code.</p>
+      <main id="resolver">
+        <p id="naics-prompt">
+          What does your business do? Type it below — we'll figure out the code.
+        </p>
         <form id="naics-form" onSubmit={onFormSubmit}>
           <Textarea
             id="naics-input"
             rows={2}
             className="max-h-[200px] resize-none overflow-y-auto"
             placeholder="e.g. retail bakery"
+            aria-labelledby="naics-prompt"
             ref={textareaRef}
             value={term}
             onChange={(e) => setTerm(e.target.value)}
@@ -184,7 +187,7 @@ export default function App() {
             <p>No matches at your current confidence floor. Try lowering it in settings.</p>
           </div>
         )}
-      </section>
+      </main>
       <footer id="site-footer">
         <a href="https://cajuncodemonkey.com/" target="_blank" rel="noopener" id="ccm-link">
           <img src={`${base}cajun-code-monkey.png`} alt="" width={25} height={28} /> A Cajun Code
