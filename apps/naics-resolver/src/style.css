@@ -1,12 +1,18 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
+
 :root {
   --text: #6b6375;
   --text-h: #08060d;
   --bg: #fff;
   --border: #e5e4e7;
   --code-bg: #f4f3ec;
-  --accent: #f27b57;
-  --accent-bg: rgba(242, 123, 87, 0.12);
-  --accent-border: rgba(242, 123, 87, 0.5);
+  --brand: #f27b57;
+  --brand-bg: rgba(242, 123, 87, 0.12);
+  --brand-border: rgba(242, 123, 87, 0.5);
   --shadow: rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
 
   --sans: system-ui, "Segoe UI", Roboto, sans-serif;
@@ -26,6 +32,28 @@
   @media (max-width: 1024px) {
     font-size: 16px;
   }
+
+  /* shadcn/ui semantic tokens — mapped to the app's own vars above (§V19/V67)
+     via var() indirection so they auto-follow the dark-mode block below,
+     ⊥ hardcoded shadcn defaults. */
+  --background: var(--bg);
+  --foreground: var(--text-h);
+  --card: var(--bg);
+  --card-foreground: var(--text-h);
+  --popover: var(--bg);
+  --popover-foreground: var(--text-h);
+  --primary: var(--brand);
+  --primary-foreground: oklch(1 0 0);
+  --secondary: var(--code-bg);
+  --secondary-foreground: var(--text-h);
+  --muted: var(--code-bg);
+  --muted-foreground: var(--text);
+  --accent: var(--code-bg);
+  --accent-foreground: var(--text-h);
+  --destructive: oklch(0.577 0.245 27.325);
+  --input: var(--border);
+  --ring: var(--brand);
+  --radius: 0.375rem;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -35,9 +63,9 @@
     --bg: #16171d;
     --border: #2e303a;
     --code-bg: #1f2028;
-    --accent: #ffab91;
-    --accent-bg: rgba(255, 171, 145, 0.15);
-    --accent-border: rgba(255, 171, 145, 0.5);
+    --brand: #ffab91;
+    --brand-bg: rgba(255, 171, 145, 0.15);
+    --brand-border: rgba(255, 171, 145, 0.5);
     --shadow: rgba(0, 0, 0, 0.4) 0 10px 15px -3px, rgba(0, 0, 0, 0.25) 0 4px 6px -2px;
   }
 }
@@ -48,11 +76,11 @@ body {
 }
 
 a {
-  color: var(--accent);
+  color: var(--brand);
   text-decoration: none;
 
   &:visited {
-    color: var(--accent);
+    color: var(--brand);
   }
   &:hover,
   &:focus-visible {
@@ -101,7 +129,7 @@ h1 {
     text-decoration: none;
   }
   &:focus-visible {
-    outline: 2px solid var(--accent);
+    outline: 2px solid var(--brand);
     outline-offset: 2px;
   }
 }
@@ -202,7 +230,7 @@ code {
   overflow-y: auto;
 
   &:focus-visible {
-    outline: 2px solid var(--accent);
+    outline: 2px solid var(--brand);
     outline-offset: 1px;
   }
 }
@@ -218,16 +246,16 @@ code {
   padding: 10px 16px;
   border-radius: 6px;
   border: 2px solid transparent;
-  color: var(--accent);
-  background: var(--accent-bg);
+  color: var(--brand);
+  background: var(--brand-bg);
   cursor: pointer;
   transition: border-color 0.3s;
 
   &:hover {
-    border-color: var(--accent-border);
+    border-color: var(--brand-border);
   }
   &:focus-visible {
-    outline: 2px solid var(--accent);
+    outline: 2px solid var(--brand);
     outline-offset: 2px;
   }
 }
@@ -246,7 +274,7 @@ code {
     border-color: var(--text);
   }
   &:focus-visible {
-    outline: 2px solid var(--accent);
+    outline: 2px solid var(--brand);
     outline-offset: 2px;
   }
   &:disabled {
@@ -301,14 +329,14 @@ code {
     background: none;
     font: inherit;
     font-size: 14px;
-    color: var(--accent);
+    color: var(--brand);
     cursor: pointer;
 
     &:hover {
       filter: brightness(0.85);
     }
     &:focus-visible {
-      outline: 2px solid var(--accent);
+      outline: 2px solid var(--brand);
       outline-offset: 2px;
     }
   }
@@ -387,7 +415,7 @@ code {
       box-shadow: var(--shadow);
     }
     &:focus-visible {
-      outline: 2px solid var(--accent);
+      outline: 2px solid var(--brand);
       outline-offset: 2px;
     }
   }
@@ -408,7 +436,7 @@ code {
     padding: 2px 4px;
     border: none;
     font-size: 14px;
-    color: var(--accent);
+    color: var(--brand);
     background: none;
 
     &:hover {
@@ -450,4 +478,59 @@ code {
   font-size: 14px;
   color: var(--text);
   cursor: pointer;
+}
+
+@theme inline {
+  --font-heading: var(--heading);
+  --font-sans: var(--sans);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --color-foreground: var(--foreground);
+  --color-background: var(--background);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  html {
+    @apply font-sans;
+  }
 }

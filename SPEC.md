@@ -59,6 +59,9 @@ static page: free-text business description → client-side ONNX inference → 6
 - hook's effect ! guard unmount-before-resolve: mounted-flag/cancelled-bool in cleanup, skips setState after unmount. `loadNaics()` itself ⊥ cancellable (shared cached promise, §V48) — guard only covers this hook instance's own state.
 - `apps/naics-resolver` = only in-repo consumer to update — T67 (existing loading-indicator) refactored to consume the hook, T84 (error-state UI) built directly on the hook's `status:'error'` branch. single owner of load/error state, ⊥ duplicated-then-migrated.
 - naics-search's provider-loading change (V47-V54) = breaking change (network-by-default, zero bundled data, `loadNaics()` can now reject) — acceptable. release ! bump `@cajuncodemonkey/naics-search` MAJOR version (semver), ⊥ patch/minor.
+- UI component lib = shadcn/ui (Radix primitives + Tailwind CSS), CLI-scaffolded components copied into `apps/naics-resolver/src/components/ui/` — code-owned/editable, ⊥ npm runtime dep on shadcn itself. Tailwind scoped to `apps/naics-resolver` build only, ⊥ `packages/*` (keeps pkg minimal-deps, §C:30/V68).
+- hand-rolled controls (buttons, textarea, gear settings panel, list/card rows) migrated → shadcn equivalents (Button, Textarea, Select, Checkbox, Popover, Card) where a matching primitive exists. custom hierarchy/decision-tree nav (V12/V14) stays hand-built — no shadcn tree primitive.
+- Cajun Code Monkey brand palette + heading font (§C above, V19/V20) ! regress — shadcn's Tailwind theme tokens mapped to existing `--accent`/`--accent-bg`/`--accent-border`/`--heading` CSS vars, ⊥ default shadcn theme.
 
 ## §R RESEARCH
 
@@ -110,6 +113,8 @@ R14|decision (grill session, 2026-08-21): R8 (rejected `fetch()`, Node `file://`
 - dir: `apps/naics-resolver/` — app code post-reorg (was repo root): `src/`, `index.html`, `public/`, app-level `vite.config.ts`/`tsconfig.json`.
 - file: `knip.json` (or `"knip"` key in root `package.json`) — entry/project patterns scoped to `apps/*`,`packages/naics-search/src/**`, excludes `beacon/**` (R11).
 - config: `packages/naics-search`'s tsdown config — `publint: true`, `attw: true` flags (R13), wired into `vp check`/CI as gate.
+- config: `apps/naics-resolver/components.json` — shadcn CLI config (style, paths, aliases).
+- dir: `apps/naics-resolver/src/components/ui/` — shadcn-generated primitives (button, textarea, select, checkbox, popover, card…), owned/edited in-repo.
 
 ## §V INVARIANTS
 
@@ -179,6 +184,8 @@ V63: `publish-naics-search.yml`'s GitHub-Release-asset step (T85) ! run w/ `perm
 V64: `@cajuncodemonkey/naics-search-data`'s version ! ever drift from `@cajuncodemonkey/naics-search`'s version — both publish from the same workflow run/tag (V54), guards the default provider's URL (V49) from pointing @ a version w/ no matching data.
 V65: `packages/naics-search-data` ! carry no code/exports (data files only, no TS/JS) — knip/publint/attw config excludes it same as `beacon/**` (R11/V41 pattern), ⊥ load-bearing given it's data-only, kept as documentation.
 V66: `publish-naics-search.yml`/`publish-naics-search-react.yml`'s `pnpm run check` step ! run only after BOTH `packages/naics-search` AND `packages/naics-search-react` are built (dependency order: naics-search first) — root `pnpm run check` typechecks the whole workspace incl. `apps/naics-resolver`, which resolves both pkgs' `dist/` for module/type resolution (guards B14, same bug class as B5/V31 but for the 2nd pkg naics-resolver now depends on).
+V67: shadcn/ui migration ! regress visual brand (palette/font, V19/V20) or e2e (V27) — verified via `vp test:e2e` green + visual check post-migration.
+V68: shadcn/Tailwind confined to `apps/naics-resolver` — ⊥ added to `packages/naics-search`/`packages/naics-search-react` (keep pkg minimal-deps, §C:30).
 
 ## §T TASKS
 
@@ -280,6 +287,11 @@ T94|x|refactor `apps/naics-resolver` to consume `useNaicsSearch()` — replaces 
 T95|x|scaffold `packages/naics-search-data` workspace pkg (data files only, copied from `packages/naics-search/src/data/*.json` @ publish time), add to `pnpm-workspace.yaml`|V64,T82
 T96|x|extend knip/publint/attw config: cover `packages/naics-search-react/src/**` (V62), exclude `packages/naics-search-data` (V65)|V62,V65
 T97|x|delay-gate "Loading NAICS model…" text behind 2s setTimeout in app.tsx (⊥ flash on fast loads) — status='loading' still tracked immediately, only visible text rendering waits|V28
+T98|x|init shadcn/ui in apps/naics-resolver (CLI init, Tailwind setup, components.json, map theme tokens to existing brand CSS vars)|V67,V68
+T99|.|migrate primitive controls (submit/clear buttons, textarea, gear-icon settings trigger) → shadcn Button/Textarea/Popover|V67,T98
+T100|.|migrate settings panel controls (detailsMode select, floor input, alwaysShowDefinition checkbox) → shadcn Select/Input/Checkbox|V67,T50,T98
+T101|.|migrate result panel + candidate list rows/cards → shadcn Card|V67,T51,T98
+T102|.|verify e2e (V27) + visual brand check post-migration|V67,T98,T99,T100,T101
 
 ## §B BUGS
 
