@@ -24,6 +24,10 @@ jobs:
           registry-url: https://registry.npmjs.org
       - run: npm install -g npm@latest # trusted publishing needs npm >=11.5.1
       - run: pnpm install --frozen-lockfile
+      # V66: app's typecheck (pnpm run check) resolves BOTH pkgs' dist/ — build
+      # naics-search first (naics-search-react depends on it), in dependency order.
+      - run: pnpm --filter @cajuncodemonkey/naics-search run build
+      - run: pnpm --filter @cajuncodemonkey/naics-search-react run build
       - run: pnpm run check
       - name: Publish naics-search
         run: npm publish --access public --provenance
