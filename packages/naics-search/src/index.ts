@@ -3,6 +3,7 @@ import { getNode } from "./naics/drilldown.ts";
 
 export { loadNaics, type LoadedNaics } from "./naics/loader.ts";
 export { BeaconModel, type BeaconParams, type NaicsScore } from "./naics/beacon-model.ts";
+export { configureDataProvider, type DataProvider, type NaicsData } from "./naics/provider.ts";
 export {
   drilldownOptions,
   getAncestorPath,
