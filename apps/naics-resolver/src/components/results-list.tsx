@@ -34,7 +34,7 @@ export function ResultsList({
         const title = node?.title ?? titles.get(c.naics) ?? c.naics;
         const { label } = classifyConfidence(c.score);
         return (
-          <Item key={c.naics} variant="outline" data-code={c.naics}>
+          <Item key={c.naics} variant="outline" className="items-start" data-code={c.naics}>
             <ItemContent>
               <ItemTitle>
                 <span className="font-mono text-xs text-muted-foreground">{c.naics}</span>
