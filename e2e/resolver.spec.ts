@@ -1,4 +1,4 @@
-import { test, expect } from "./mock-naics-data.ts";
+import { mockNaicsDataSlow, test, expect } from "./mock-naics-data.ts";
 import { TEST_CASES, type TestCaseCategory } from "../apps/naics-resolver/src/naics/test-cases.ts";
 
 const RESULT_RE = /confidence: (\d\.\d\d) \((high|medium|low)\)/;
@@ -133,9 +133,19 @@ test("'How does it work?' link points to the README section on GitHub", async ({
   await expect(link).toHaveAttribute("target", "_blank");
 });
 
-// §V28: user must see feedback while the model is loading, ⊥ a silent multi-second wait.
-test("loading indicator shown until the model is ready", async ({ page }) => {
+// §V28: fast (mocked, <2s) load never flashes the "Loading…" text.
+test("loading text stays hidden on a fast load", async ({ page }) => {
   await page.goto("/");
+  await expect(page.locator("#naics-loading")).toBeHidden();
+  await expect(page.locator("#naics-input")).toBeEnabled(); // model ready
+  await expect(page.locator("#naics-loading")).toBeHidden();
+});
+
+// §V28: a load past the 2s delay still shows feedback, ⊥ a silent multi-second wait.
+test("loading indicator shown once a slow load passes the 2s delay", async ({ page }) => {
+  await mockNaicsDataSlow(page, 2500);
+  await page.goto("/");
+  await expect(page.locator("#naics-loading")).toBeHidden();
   await expect(page.locator("#naics-loading")).toBeVisible();
   await expect(page.locator("#naics-loading")).toBeHidden(); // model load completes
 });

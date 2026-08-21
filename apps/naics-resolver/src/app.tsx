@@ -59,6 +59,18 @@ export default function App() {
   // awaited by input handling — submit before load done just awaits it (below).
   const naics = useNaicsSearch();
   const autoRanRef = useRef(false);
+  const [showLoadingText, setShowLoadingText] = useState(false);
+
+  // §V28: don't flash "Loading…" text on fast (<2s) loads — distracting when the
+  // action resolves near-instantly. status itself still updates immediately.
+  useEffect(() => {
+    if (naics.status !== "loading") {
+      setShowLoadingText(false);
+      return;
+    }
+    const timer = setTimeout(() => setShowLoadingText(true), 2000);
+    return () => clearTimeout(timer);
+  }, [naics.status]);
 
   useEffect(() => {
     saveSettings(settings); // §V15: URL/localStorage always reflect the effective (merged) settings.
@@ -232,7 +244,7 @@ export default function App() {
         >
           💡 How does it work?
         </a>
-        {naics.status === "loading" && (
+        {naics.status === "loading" && showLoadingText && (
           <p id="naics-loading" role="status">
             ⏳ Loading NAICS model…
           </p>

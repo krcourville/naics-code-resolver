@@ -18,6 +18,14 @@ async function mockNaicsData(page: Page): Promise<void> {
   );
 }
 
+/** Same URL pattern as the default mock, but delayed — for the §V28 2s-delay-gated loading text test. */
+export async function mockNaicsDataSlow(page: Page, delayMs: number): Promise<void> {
+  await page.route("https://unpkg.com/@cajuncodemonkey/naics-search-data*/**", async (route) => {
+    await new Promise((resolve) => setTimeout(resolve, delayMs));
+    await route.fulfill({ path: dataFilePath(route.request().url()) });
+  });
+}
+
 /** Same URL pattern, but both the primary AND fallback hosts fail — for the loadNaics() rejection path (T88/V49/V60). */
 export async function mockNaicsDataFailure(page: Page): Promise<void> {
   await page.route("https://unpkg.com/@cajuncodemonkey/naics-search-data*/**", (route) =>

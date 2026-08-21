@@ -140,7 +140,7 @@ V24: pkg ! depend on DOM/browser-only globals beyond dynamic import — usable i
 V25: publish workflow ! run only on tag push matching `naics-search-v*`, ⊥ on plain `main` push.
 V26: `scripts/build-model.py` & `build-hierarchy.py` `--out` default ! diverge from path pkg loader actually reads — single declared data path, ⊥ manual dual-location sync (guards T59).
 V27: React rewrite (T61) ! regress `e2e/resolver.spec.ts`|`e2e/settings.spec.ts` — DOM/selectors preserved or e2e updated same commit, `vp test:e2e` green required before T61 flips `x`.
-V28: user ! left w/o feedback while model/hierarchy loading (§V4/§V5) or a submit in-flight — visible busy/loading indicator shown both cases, ⊥ blank/static UI during multi-second cold load (measured ~4.5-6s, T59 caveat).
+V28: user ! left w/o feedback while model/hierarchy loading (§V4/§V5) or a submit in-flight — visible busy/loading indicator shown both cases, ⊥ blank/static UI during multi-second cold load (measured ~4.5-6s, T59 caveat). indicator text ! appear before 2000ms elapsed (delay-gated) — fast (<2s) loads ⊥ flash distracting text, slow loads still get feedback.
 V29: result panel & Q&A candidate views (tree/list/card) ! show a census.gov link (pkg `censusUrl()`) for the displayed code, opens new tab (`target="_blank" rel="noopener"`, matching existing header/footer link pattern). link text ! include the naics code (⊥ bare "View on census.gov" — ambiguous when multiple candidates/rows on screen at once).
 V30: `packages/naics-search/src/data/*.json` ! stay compact (no pretty-print whitespace) — `vite.config.ts` `fmt.ignorePatterns` ! exclude that dir, so `vp check --fix`/staged-file formatting never re-inflates generated data (guards T59/B4).
 V31: `.github/workflows/publish-naics-search.yml` ! build `packages/naics-search` (produces `dist/`, which app imports resolve to) BEFORE `vp check`/`vp test` run — CI starts from a clean checkout w/ no pre-existing `dist/`, ⊥ rely on a locally-built one (guards B5).
@@ -279,6 +279,7 @@ T93|x|add `.github/workflows/publish-naics-search-react.yml` — tag-triggered (
 T94|x|refactor `apps/naics-resolver` to consume `useNaicsSearch()` — replaces T67's manual load-effect|V58,T90
 T95|x|scaffold `packages/naics-search-data` workspace pkg (data files only, copied from `packages/naics-search/src/data/*.json` @ publish time), add to `pnpm-workspace.yaml`|V64,T82
 T96|x|extend knip/publint/attw config: cover `packages/naics-search-react/src/**` (V62), exclude `packages/naics-search-data` (V65)|V62,V65
+T97|x|delay-gate "Loading NAICS model…" text behind 2s setTimeout in app.tsx (⊥ flash on fast loads) — status='loading' still tracked immediately, only visible text rendering waits|V28
 
 ## §B BUGS
 
