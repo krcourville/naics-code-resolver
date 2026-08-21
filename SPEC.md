@@ -2,7 +2,7 @@
 
 ## §G GOAL
 
-static page: free-text business description → client-side ONNX inference → 6-digit NAICS code; ambiguous/low-confidence → drill-down clarifying Q&A vs official NAICS hierarchy till single code confirmed. core resolver logic also shipped as standalone npm pkg `@cajuncodemonkey/naics-search` (search+drilldown fns) for reuse outside this app.
+static page: free-text business description → client-side ONNX inference → 6-digit NAICS code; ambiguous/low-confidence → drill-down clarifying Q&A vs official NAICS hierarchy till single code confirmed. core resolver logic also shipped as standalone npm pkg `@cajuncodemonkey/naics-search` (search+drilldown fns) for reuse outside this app; React consumers get `@cajuncodemonkey/naics-search-react` (`useNaicsSearch()` hook) wrapping its load-state.
 
 ## §C CONSTRAINTS
 
@@ -30,12 +30,12 @@ static page: free-text business description → client-side ONNX inference → 6
 - new workspace pkg `packages/naics-search/`, added to `pnpm-workspace.yaml` packages list. exports functions only, ⊥ UI framework/React, minimal deps.
 - pkg exports `search(businessDescription: string)` → list `{naicsCode, title, description, censusUrl, score}`. `censusUrl` = `https://www.census.gov/naics/?input={code}&year=2022&details={code}`, `{code}`=naicsCode. `score`[0,1] = model confidence for that code — app (§C:35 single source of truth) needs it for §V2/§V8/§V18 banding/floor-filter, ⊥ separate scored-candidate export.
 - pkg also exports drilldown Q&A functions (ported from `src/naics/drilldown.ts`) — full resolver flow available, ⊥ search() alone.
-- model+hierarchy JSON bundled inside pkg, loaded via dynamic import — importing module ⊥ pay data cost upfront, loads async on first `search()`/drilldown call.
+- model+hierarchy JSON ⊥ bundled inside pkg (was: dynamic import, superseded) — loaded async via pluggable data-provider contract, on first `search()`/drilldown call. importing module still ⊥ pay data cost upfront.
 - pkg built w/ `tsdown`, ESM output.
 - app (`src/main.ts`/`src/naics/*`) consumes this pkg internally — single source of truth, ⊥ duplicated logic.
 - published public npm registry as `@cajuncodemonkey/naics-search` (scope owned).
 - publish = CI, tag-triggered: push tag `naics-search-v*` → GH Actions: `vp install` → `vp check`/`vp test` → `tsdown` build → `npm publish --access public --provenance` via npm trusted publishing (OIDC, `id-token: write`) — ⊥ long-lived `NPM_TOKEN` secret. ⊥ publish on plain `main` push.
-- `packages/naics-search/README.md` published w/ pkg (npm listing) — ! cover: exported API docs (`search()`+drilldown fns, param/return shapes), caveats (browser-DOM-free but dynamic-import data load, bundle size, sparse-model tradeoffs per §C model constraints), simple usage example, link back to this repo (https://github.com/krcourville/naics-code-resolver). ⊥ release steps — those live in repo-root `CONTRIBUTING.md` instead (npm listing = end-user docs, ⊥ maintainer process).
+- `packages/naics-search/README.md` published w/ pkg (npm listing) — ! cover: exported API docs (`search()`+drilldown fns, param/return shapes), caveats (network-by-default data load via pluggable provider — default CDN, fs/custom override available —, zero bundled data bytes, sparse-model tradeoffs per §C model constraints), simple usage example, link back to this repo (https://github.com/krcourville/naics-code-resolver). ⊥ release steps — those live in repo-root `CONTRIBUTING.md` instead (npm listing = end-user docs, ⊥ maintainer process).
 - repo-root `CONTRIBUTING.md` — maintainer release steps for `@cajuncodemonkey/naics-search`: bump version → commit → tag `naics-search-vX.Y.Z` → push tag → CI publishes via npm Trusted Publisher (OIDC, T64).
 - npm registry Trusted Publisher configured on `@cajuncodemonkey/naics-search` (GitHub Actions, `krcourville/naics-code-resolver`, workflow `publish-naics-search.yml`, "Allow npm publish") — outside spec/build scope, user action, done via npmjs.com package settings.
 - every `packages/naics-search/src/index.ts` export (fns, classes, methods, exported types/interfaces incl. fields) ! carry a TSDoc comment (`/** ... */`) — params/return documented where non-obvious. `vp pack --dts` ships these into `dist/index.d.mts`, consumer IDE hover = only API doc surface beyond README.
@@ -43,6 +43,22 @@ static page: free-text business description → client-side ONNX inference → 6
 - knip added to `vp check`/CI, gates immediately (fails build on unused files/exports/deps) — ⊥ report-only grace period.
 - publint + attw enabled via `packages/naics-search`'s existing tsdown build (`publint: true`, `attw: true` in tsdown config, §R13) — zero new build tool, gates CI immediately same as knip.
 - knip/publint/attw config ! exclude `beacon/**` (submodule, not this project's maintained code, §C existing submodule constraint).
+- pkg data-provider contract: async fn/type returning `{params: BeaconParams, hierarchy: HierarchyTree}` — replaces bundled-JSON dynamic import as the loading mechanism (see edited bundling bullet above). pkg ships zero data bytes: `package.json` `files` ⊥ list `data`, build script drops `cp -r src/data data`. `src/data/*.json` stays in-repo (still needed for release-asset publish + app's own build).
+- built-in providers, all pkg-shipped: default primary = unpkg (`unpkg.com/@cajuncodemonkey/naics-search-data@{version}/{path}`, npm-tarball-backed, Cloudflare CDN, no documented file-size wall — replaces jsDelivr, which caps GH-sourced files @ 20MB, below the 32MB model file), auto-fallback → raw GitHub Release asset URL (same tag) on failure; fs provider (local path → async read) shipped for automated tests + as example custom/offline provider.
+- new tiny workspace pkg `packages/naics-search-data` — carries ONLY `naics-model.json`/`naics-hierarchy.json` (copied from `packages/naics-search/src/data/*.json` @ build/publish time, single source of truth per V26 discipline). published npm `@cajuncodemonkey/naics-search-data`, version kept lockstep w/ `naics-search` (same tag triggers both publishes, same workflow). nobody depends on/installs it — exists purely as an unpkg-servable blob, ⊥ a real dependency (R9's "no byte savings" objection ⊥ apply here, since nothing installs it).
+- consumer overrides data source via one-time global config setter (e.g. `configureDataProvider(fn)`) called before first `search()`/`loadNaics()` — ⊥ per-call provider param threaded through `search()`/drilldown fns.
+- `loadNaics()` can now reject (both default hosts fail) — new failure path, ⊥ possible under old bundled-data mechanism.
+- `apps/naics-resolver` (this repo's own app) uses pkg's default CDN provider too, ⊥ a local/bundled override — dogfoods same path external consumers get.
+- data release assets (`naics-model.json`/`naics-hierarchy.json`) attached in the same tag-triggered `publish-naics-search.yml` run (tag `naics-search-v*`) that publishes npm — one tag push produces both, version-locked, ⊥ separate workflow/tag.
+- ⊥ persistent cache (Cache API/IndexedDB)/web worker for data loading — browser HTTP cache on unpkg's immutable version-pinned URLs accepted as sufficient for "don't re-download every visit."
+- `BeaconModel` export unchanged by this — stays the low-level bypass (sync, takes parsed params directly), independent of provider mechanism (§R9).
+- new workspace pkg `packages/naics-search-react`, added to `pnpm-workspace.yaml`. exports `useNaicsSearch()` React hook — thin wrapper over `naics-search`'s `loadNaics()` load-state (loading/error/ready) + ready-to-call `search()`/drilldown fns. owns ⊥ app policy (confidence bands, settings, Q&A UI stay in `apps/naics-resolver`, single-source-of-truth per §C above).
+- pkg published npm `@cajuncodemonkey/naics-search-react`, own `tsdown` build + own tag-triggered publish workflow (`naics-search-react-v*`), mirrors `naics-search`'s existing publish pattern.
+- depends on `@cajuncodemonkey/naics-search` as real dep (version-locked); `react` = `peerDependency` only, ⊥ bundled.
+- `useNaicsSearch()` — no args, data-provider config (if needed) set globally via `naics-search`'s `configureDataProvider()` before mount, ⊥ the hook's concern. return = discriminated union on `status`: `{status:'loading'}` \| `{status:'error', error}` \| `{status:'ready', search, drilldownOptions, getNode, isResolved, getAncestorPath, censusUrl}` — TS narrows on `status==='ready'`, ⊥ runtime guard needed before calling fns.
+- hook's effect ! guard unmount-before-resolve: mounted-flag/cancelled-bool in cleanup, skips setState after unmount. `loadNaics()` itself ⊥ cancellable (shared cached promise, §V48) — guard only covers this hook instance's own state.
+- `apps/naics-resolver` = only in-repo consumer to update — T67 (existing loading-indicator) refactored to consume the hook, T84 (error-state UI) built directly on the hook's `status:'error'` branch. single owner of load/error state, ⊥ duplicated-then-migrated.
+- naics-search's provider-loading change (V47-V54) = breaking change (network-by-default, zero bundled data, `loadNaics()` can now reject) — acceptable. release ! bump `@cajuncodemonkey/naics-search` MAJOR version (semver), ⊥ patch/minor.
 
 ## §R RESEARCH
 
@@ -60,6 +76,7 @@ R10|Playwright-measured (T70 spike): `vp dev`'s cold `loadNaics()` submit->resul
 R11|knip has native monorepo/workspace support (`Monorepos & Workspaces` + `Integrated Monorepos` docs). exclude paths (e.g. beacon submodule) via negated `project` glob patterns, ⊥ separate ignore mechanism needed. config file: `knip.json`/`knip.jsonc`/`knip.config.ts` or `"knip"` key in package.json.|https://knip.dev/overview/configuration
 R12|publint = CLI/API linter checking npm pkg contents (exports map, main/module/types fields) for cross-bundler/runtime compat (Vite/Webpack/Rollup/Node) & common publish mistakes.|https://publint.dev/docs/, https://www.npmjs.com/package/publint
 R13|@arethetypeswrong/cli (attw) analyzes published pkg's TS types for ESM/CJS module-resolution mismatches — exact bug class behind B6-B8 (import-attribute/resolution breakage only caught by real external install, not local workspace). tsdown (pkg's build tool, §C.34) has built-in opt-in integration: `publint: true`/`attw: true` in tsdown config or `--publint`/`--attw` CLI flags, `'ci-only'` mode to gate only in CI. both are optional peer deps (`publint`, `@arethetypeswrong/core`) — no new build tooling, just enabling existing tsdown flags.|https://tsdown.dev/options/lint, https://npmjs.com/@arethetypeswrong/cli
+R14|decision (grill session, 2026-08-21): R8 (rejected `fetch()`, Node `file://` limitation) & R9 (rejected data-split pkg, no byte savings) both concluded ⊥ pursue network-based loading — neither blocks this change. R8's objection moot: CDN URLs are always `https://`, never `file://`. R9's objection ⊥ apply: this isn't a 2nd npm sub-package, it's GitHub Release assets + pluggable provider — goal here = zero data bytes in npm tarball, ⊥ total-transfer parity (which R9 was measuring). superseded by V47-V54/T78-T88.|synthesis, ⊥ independently sourced, 2026-08-21
 
 ## §I INTERFACES
 
@@ -141,6 +158,26 @@ V42: root `vite.config.ts` stays @ repo root post-reorg, hosts shared `lint`/`fm
 V43: GH Pages deploy build-output path ! match actual `vp build apps/naics-resolver` output dir (`apps/naics-resolver/dist` by default, ⊥ assumed repo-root `dist/`) — `deploy.yml`'s `upload-pages-artifact` `path:` input updated same commit as T72, verified by T73.
 V44: knip (§V38) & tsdown publint/attw (§V39/V40) CI gates ! implemented as dedicated `vp run` task(s)/workflow step(s) — ⊥ folded into `vp check` (scope = fmt+lint+typecheck only, node_modules/vite-plus/docs/guide/check.md).
 V45: `SPEC.md` ! reformatted by oxfmt (`vp check --fix`/`vp fmt`/staged pre-commit) — root `vite.config.ts` `fmt.ignorePatterns` ! include `SPEC.md`, same pattern as V30 (guards B13: oxfmt's markdown formatter doubles bare `~` into `~~`, corrupting both prose & §T status-cell literals).
+V46: V23/V24/V32/V35 (bundled-JSON dynamic-import era) superseded by provider-based loading (T78+) — kept as historical record, ⊥ current mechanism. see V47-V54.
+V47: pkg ships ⊥ data bytes — `naics-model.json`/`naics-hierarchy.json` absent from published tarball (`package.json` `files` ⊥ list `data`; `npm pack --dry-run` verifies).
+V48: `loadNaics()` lazy-singleton guarantee (old V23's intent) holds under new mechanism — import alone ⊥ trigger data fetch, only first `search()`/drilldown call does, fires once regardless of concurrent callers.
+V49: default data provider = unpkg URL (`unpkg.com/@cajuncodemonkey/naics-search-data@{version}/{path}`, version = `naics-search`'s own version, kept lockstep w/ the tiny never-installed `naics-search-data` pkg) tried first; failure → auto-fallback → raw GitHub Release asset URL, same tag; both fail → `loadNaics()` promise rejects (new failure path, ⊥ possible pre-change).
+V50: consumer overrides data source via one-time global config setter (e.g. `configureDataProvider(fn)`), called before first `search()`/`loadNaics()` — ⊥ per-call provider param threaded through `search()`/drilldown fns.
+V51: pkg ships fs-based provider (local file path → async read, returns `{params, hierarchy}`), usable directly by consumers/tests — ⊥ only default remote provider available.
+V52: `apps/naics-resolver` production build ! use pkg's default remote (CDN) provider, ⊥ configure a local/bundled override — dogfoods same path external consumers get (§C).
+V53: default provider fn ! use only runtime-agnostic `fetch` (⊥ DOM/browser-only globals) — keeps pkg usable Node 18+ & browser both, per old V24 intent.
+V54: data availability (GitHub Release assets for `naics-model.json`/`naics-hierarchy.json`, AND `@cajuncodemonkey/naics-search-data` npm publish) all happen in same `publish-naics-search.yml` run, same tag (`naics-search-v*`), that publishes `naics-search` itself — one tag push ! produce all three, version-locked (guards drift between npm version & CDN-fetchable data version).
+V55: `useNaicsSearch()` return ! discriminated union on `status` (`loading`\|`error`\|`ready`) — `search`/drilldown fns only present @ `status==='ready'`, TS narrows, ⊥ runtime guard.
+V56: `useNaicsSearch()`'s effect ! setState after unmount — mounted-flag guard in cleanup fn, regardless of `loadNaics()` resolve/reject timing.
+V57: `packages/naics-search-react` ! bundle `react` — `peerDependency` only, `@cajuncodemonkey/naics-search` = real dep.
+V58: `apps/naics-resolver`'s load/error state (T67/T84) ! single-sourced from `useNaicsSearch()` — ⊥ separate hand-rolled `loadNaics()` effect duplicated alongside it.
+V59: naics-search release containing V47-V54 (provider-based loading) ! publish as new MAJOR version (semver) — signals breaking change to existing consumers, ⊥ minor/patch.
+V60: default provider's unpkg→GitHub-Release fallback ! trigger on ANY failure of the primary attempt (network error, non-2xx status, JSON-parse failure) — ⊥ gated on a specific status code/error shape (same discipline as V35, guards recurrence of B8/B11-class bug in the new fetch-based provider).
+V61: app/e2e's default-CDN-provider path (V52/T88) ! assumed runnable against an unpublished/untagged version — pre-release dev & e2e use the fs provider (V51) pointed @ local `src/data/*.json` instead; T88's CDN-path coverage only runs post-publish or against a mocked host.
+V62: knip (V38) & publint/attw (V39/V40) scope ! extend to `packages/naics-search-react/src/**` and its `tsdown` build — same CI gate discipline as `naics-search`, ⊥ a newer pkg silently excluded.
+V63: `publish-naics-search.yml`'s GitHub-Release-asset step (T85) ! run w/ `permissions: contents: write` and explicitly create/target a GitHub Release for the pushed tag (`gh release create`/equivalent) before uploading assets — a tag push alone ⊥ create a Release object.
+V64: `@cajuncodemonkey/naics-search-data`'s version ! ever drift from `@cajuncodemonkey/naics-search`'s version — both publish from the same workflow run/tag (V54), guards the default provider's URL (V49) from pointing @ a version w/ no matching data.
+V65: `packages/naics-search-data` ! carry no code/exports (data files only, no TS/JS) — knip/publint/attw config excludes it same as `beacon/**` (R11/V41 pattern), ⊥ load-bearing given it's data-only, kept as documentation.
 
 ## §T TASKS
 
@@ -222,6 +259,25 @@ T74|x|add `knip.json` (or package.json `knip` key), scope `apps/*`+`packages/nai
 T75|x|fix knip findings (unused files/exports/deps) surfaced by T74|T74,V38
 T76|x|enable tsdown `publint: true`+`attw: {profile: 'esm-only'}` on `packages/naics-search` build (`vp pack`), wire failures into CI as dedicated step, ⊥ folded into `vp check` (V44)|V39,V40,V44,R13
 T77|x|fix publint/attw findings surfaced by T76|T76,V39,V40
+T78|x|define data-provider contract type (e.g. `DataProvider`) in pkg src — async fn returning `{params: BeaconParams, hierarchy: HierarchyTree}`|V48
+T79|.|implement default provider: unpkg URL fetch (`@cajuncodemonkey/naics-search-data`) w/ auto-fallback → raw GitHub Release asset URL, using pkg's own version|V49,V53,V60
+T80|.|implement fs provider (local path → async read)|V51
+T81|.|implement one-time global `configureDataProvider()` setter, wire into `loadNaics()` in place of old `importJson()` dynamic-import calls|V50,V48
+T82|.|strip bundled data from pkg: drop `data` from `package.json` `files`, remove `cp -r src/data data` build step — `src/data/*.json` stays in-repo (release-asset publish + app's own build still need it)|V47
+T83|.|`apps/naics-resolver` — no provider config, dogfoods default CDN provider|V52
+T84|.|add error UI state to loading indicator (T67) for `loadNaics()` rejection (both default hosts failed) — built directly on `useNaicsSearch()`'s `status:'error'` branch|V49,V58,I.ui,T90,T94
+T85|.|extend `publish-naics-search.yml`: add `permissions: contents: write`, explicitly create/target the GitHub Release for the pushed tag, attach `naics-model.json`+`naics-hierarchy.json` as its assets, AND publish `@cajuncodemonkey/naics-search-data` to npm — all in same tag-triggered run|V54,V63,V64
+T86|.|update `packages/naics-search/README.md` caveats: network-by-default data load, provider override, fs provider example, CDN fallback behavior|V49,V50,V51
+T87|.|verify via throwaway `npm install <tarball>` + real `search()` call: zero data files in installed pkg, real network fetch succeeds against published release — same external-install discipline as V32|V47,V49
+T88|.|Playwright: cover `loadNaics()` failure path (mock/block network) → app shows error state (T84), ⊥ blank/stuck-loading forever|T84,V49
+T89|.|scaffold `packages/naics-search-react/` workspace pkg, add to `pnpm-workspace.yaml`|-
+T90|.|implement `useNaicsSearch()` hook: loading/error/ready states, mounted-flag guard, re-export `search()`+drilldown fns @ ready|V55,V56,T89
+T91|.|configure `tsdown` build for pkg (ESM output), `react` as peerDependency|V57,T89
+T92|.|write `packages/naics-search-react/README.md`: API docs, usage example, link back to repo|T90
+T93|.|add `.github/workflows/publish-naics-search-react.yml` — tag-triggered (`naics-search-react-v*`) build+publish to npm, mirrors `publish-naics-search.yml`|T91
+T94|.|refactor `apps/naics-resolver` to consume `useNaicsSearch()` — replaces T67's manual load-effect|V58,T90
+T95|.|scaffold `packages/naics-search-data` workspace pkg (data files only, copied from `packages/naics-search/src/data/*.json` @ publish time), add to `pnpm-workspace.yaml`|V64,T82
+T96|.|extend knip/publint/attw config: cover `packages/naics-search-react/src/**` (V62), exclude `packages/naics-search-data` (V65)|V62,V65
 
 ## §B BUGS
 
