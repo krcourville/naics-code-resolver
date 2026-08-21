@@ -212,9 +212,6 @@ code {
 }
 
 #naics-result {
-  padding: 16px;
-  border-radius: 6px;
-  border: 1px solid var(--border);
   text-align: left;
 
   .code {
