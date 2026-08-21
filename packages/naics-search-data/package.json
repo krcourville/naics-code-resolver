@@ -1,0 +1,20 @@
+{
+  "name": "@cajuncodemonkey/naics-search-data",
+  "version": "2.0.0",
+  "private": false,
+  "description": "NAICS model+hierarchy data for @cajuncodemonkey/naics-search's default CDN provider (unpkg). Not meant to be installed as a dependency.",
+  "homepage": "https://github.com/krcourville/naics-code-resolver#readme",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/krcourville/naics-code-resolver.git",
+    "directory": "packages/naics-search-data"
+  },
+  "files": [
+    "naics-model.json",
+    "naics-hierarchy.json"
+  ],
+  "scripts": {
+    "build": "rm -f naics-model.json naics-hierarchy.json && cp ../naics-search/src/data/naics-model.json . && cp ../naics-search/src/data/naics-hierarchy.json ."
+  }
+}
