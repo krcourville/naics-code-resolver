@@ -270,7 +270,7 @@ T85|x|extend `publish-naics-search.yml`: add `permissions: contents: write`, exp
 T86|x|update `packages/naics-search/README.md` caveats: network-by-default data load, provider override, fs provider example, CDN fallback behavior|V49,V50,V51
 T87|x|verify via throwaway `npm install <tarball>` + real `search()` call: zero data files in installed pkg (confirmed, 52K unpacked incl. zero `.json` data), real `search()` via `fs-provider` subpath works end-to-end outside the workspace — real network fetch against the *published* unpkg release couldn't be exercised (nothing published yet), that leg needs a real tag push|V47,V49
 T88|.|Playwright: cover `loadNaics()` failure path (mock/block network) → app shows error state (T84), ⊥ blank/stuck-loading forever|T84,V49
-T89|.|scaffold `packages/naics-search-react/` workspace pkg, add to `pnpm-workspace.yaml`|-
+T89|x|scaffold `packages/naics-search-react/` workspace pkg, add to `pnpm-workspace.yaml`|-
 T90|.|implement `useNaicsSearch()` hook: loading/error/ready states, mounted-flag guard, re-export `search()`+drilldown fns @ ready|V55,V56,T89
 T91|.|configure `tsdown` build for pkg (ESM output), `react` as peerDependency|V57,T89
 T92|.|write `packages/naics-search-react/README.md`: API docs, usage example, link back to repo|T90
