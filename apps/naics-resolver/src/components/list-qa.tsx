@@ -5,6 +5,7 @@ import {
   type NaicsScore,
 } from "@cajuncodemonkey/naics-search";
 import { CONFIDENCE_EMOJI, classifyConfidence } from "../naics/confidence.ts";
+import { Checkbox } from "./ui/checkbox.tsx";
 
 // §V17: plain-list alternative to the decision tree — fixed 2-line rows (never reflow across
 // breakpoints): line 1 = code + title, line 2 = confidence + "Select" button. Definitions are
@@ -28,13 +29,12 @@ export function ListQA({
   return (
     <div id="naics-qa">
       <h2 className="qa-heading">Top matches</h2>
-      <label className="qa-list-showdef">
-        <input
-          type="checkbox"
+      <label htmlFor="qa-list-showdef" className="qa-list-showdef">
+        <Checkbox
           id="qa-list-showdef"
           checked={showDef}
-          onChange={(e) => onToggleShowDef(e.target.checked)}
-        />{" "}
+          onCheckedChange={(checked) => onToggleShowDef(checked === true)}
+        />
         Show definitions
       </label>
       <ul className="qa-list">

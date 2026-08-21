@@ -289,7 +289,7 @@ T96|x|extend knip/publint/attw config: cover `packages/naics-search-react/src/**
 T97|x|delay-gate "Loading NAICS model…" text behind 2s setTimeout in app.tsx (⊥ flash on fast loads) — status='loading' still tracked immediately, only visible text rendering waits|V28
 T98|x|init shadcn/ui in apps/naics-resolver (CLI init, Tailwind setup, components.json, map theme tokens to existing brand CSS vars)|V67,V68
 T99|x|migrate primitive controls (submit/clear buttons, textarea, gear-icon settings trigger) → shadcn Button/Textarea/Popover|V67,T98
-T100|.|migrate settings panel controls (detailsMode select, floor input, alwaysShowDefinition checkbox) → shadcn Select/Input/Checkbox|V67,T50,T98
+T100|x|migrate settings panel controls (detailsMode select, floor input, alwaysShowDefinition checkbox) → shadcn Select/Input/Checkbox|V67,T50,T98
 T101|.|migrate result panel + candidate list rows/cards → shadcn Card|V67,T51,T98
 T102|.|verify e2e (V27) + visual brand check post-migration|V67,T98,T99,T100,T101
 

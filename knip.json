@@ -5,8 +5,7 @@
     "publint",
     "tailwindcss",
     "tw-animate-css",
-    "shadcn",
-    "lucide-react"
+    "shadcn"
   ],
   "workspaces": {
     ".": {

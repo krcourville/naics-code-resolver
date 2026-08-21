@@ -13,6 +13,14 @@ import { ListQA } from "./components/list-qa.tsx";
 import { ResultPanel } from "./components/result-panel.tsx";
 import { TreeQA } from "./components/tree-qa.tsx";
 import { Button } from "./components/ui/button.tsx";
+import { Input } from "./components/ui/input.tsx";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "./components/ui/select.tsx";
 import { Textarea } from "./components/ui/textarea.tsx";
 import { classifyConfidence } from "./naics/confidence.ts";
 import { filterByFloor } from "./naics/floor.ts";
@@ -192,20 +200,23 @@ export default function App() {
           <summary>⚙️ Settings</summary>
           <div className="settings-fields">
             <label htmlFor="setting-details">Result view</label>
-            <select
-              id="setting-details"
+            <Select
               value={settings.details}
-              onChange={(e) =>
-                applySettings({ ...settings, details: e.target.value as DetailsMode })
-              }
+              onValueChange={(v) => applySettings({ ...settings, details: v as DetailsMode })}
             >
-              <option value="list">Plain list</option>
-              <option value="tree">Decision tree</option>
-            </select>
+              <SelectTrigger id="setting-details">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="list">Plain list</SelectItem>
+                <SelectItem value="tree">Decision tree</SelectItem>
+              </SelectContent>
+            </Select>
             <label htmlFor="setting-floor">Confidence floor (0–1)</label>
-            <input
+            <Input
               type="number"
               id="setting-floor"
+              className="w-24"
               min={0}
               max={1}
               step={0.05}

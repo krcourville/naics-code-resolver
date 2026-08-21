@@ -71,12 +71,15 @@ test("floor emptying the candidate pool falls back to hierarchy browse", async (
 test("settings persist to localStorage across reloads", async ({ page }) => {
   await page.goto("/");
   await page.click("#settings-panel summary");
-  await page.selectOption("#setting-details", "tree"); // away from default (list) to prove it stuck
+  // shadcn Select is Radix-based, not a native <select> — click the trigger,
+  // then the option, rather than page.selectOption().
+  await page.click("#setting-details");
+  await page.getByRole("option", { name: "Decision tree" }).click(); // away from default (list) to prove it stuck
   await page.fill("#setting-floor", "0.3");
   await page.dispatchEvent("#setting-floor", "change");
 
   await page.goto("/"); // fresh load, no query params
-  await expect(page.locator("#setting-details")).toHaveValue("tree");
+  await expect(page.locator("#setting-details")).toHaveText("Decision tree");
   await expect(page.locator("#setting-floor")).toHaveValue("0.3");
 });
 
@@ -88,6 +91,6 @@ test("malformed naics-settings localStorage does not crash the app", async ({ pa
     localStorage.setItem("naics-settings", "{not json");
   });
   await page.goto("/");
-  await expect(page.locator("#setting-details")).toHaveValue("list");
+  await expect(page.locator("#setting-details")).toHaveText("Plain list");
   expect(errors).toEqual([]);
 });
