@@ -20,17 +20,14 @@ describe("clampFloor", () => {
 });
 
 describe("parseQueryParams", () => {
-  test("reads details/showDef/floor", () => {
-    expect(parseQueryParams(new URLSearchParams("details=list&showDef=1&floor=0.6"))).toEqual({
-      details: "list",
+  test("reads showDef/floor", () => {
+    expect(parseQueryParams(new URLSearchParams("showDef=1&floor=0.6"))).toEqual({
       showDef: true,
       floor: 0.6,
     });
   });
   test("ignores invalid values", () => {
-    expect(parseQueryParams(new URLSearchParams("details=bogus&showDef=maybe&floor=nope"))).toEqual(
-      {},
-    );
+    expect(parseQueryParams(new URLSearchParams("showDef=maybe&floor=nope"))).toEqual({});
   });
   test("empty params -> empty partial", () => {
     expect(parseQueryParams(new URLSearchParams())).toEqual({});
@@ -39,8 +36,13 @@ describe("parseQueryParams", () => {
 
 describe("parseStoredJson (§V21 malformed-input safety)", () => {
   test("valid JSON parsed", () => {
-    expect(parseStoredJson('{"details":"list","showDef":true,"floor":0.3}')).toEqual({
-      details: "list",
+    expect(parseStoredJson('{"showDef":true,"floor":0.3}')).toEqual({
+      showDef: true,
+      floor: 0.3,
+    });
+  });
+  test("stale details field dropped (§V13)", () => {
+    expect(parseStoredJson('{"details":"tree","showDef":true,"floor":0.3}')).toEqual({
       showDef: true,
       floor: 0.3,
     });

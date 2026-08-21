@@ -1,8 +1,6 @@
 import { mockNaicsDataSlow, test, expect } from "./mock-naics-data.ts";
 import { TEST_CASES, type TestCaseCategory } from "../apps/naics-resolver/src/naics/test-cases.ts";
 
-const RESULT_RE = /confidence: (\d\.\d\d) \((high|medium|low)\)/;
-
 // Tallies actual band distribution per category so §C's provisional
 // thresholds can be eyeballed/tuned against the curated list (T10, T11).
 const bandTally: Record<TestCaseCategory, Record<string, number>> = {
@@ -19,13 +17,14 @@ for (const { description, category } of TEST_CASES) {
     await page.goto("/");
     await page.fill("#naics-input", description);
     await page.click("#naics-submit");
-    await expect(page.locator("#naics-result")).toBeVisible();
 
-    const resultText = await page.locator("#naics-result").textContent();
+    const items = page.locator("#naics-result [data-code]");
+    const emptyState = page.locator("#naics-empty");
+    await expect(items.first().or(emptyState)).toBeVisible();
     expect(errors, `no runtime errors for "${description}"`).toEqual([]);
 
-    const match = resultText?.match(RESULT_RE);
-    if (!match) {
+    const count = await items.count();
+    if (count === 0) {
       // §V3 exception: legitimately unmapped input (edge case) — must fail
       // gracefully, not crash.
       expect(category, `unmatched result only expected for edge cases: "${description}"`).toBe(
@@ -34,18 +33,17 @@ for (const { description, category } of TEST_CASES) {
       return;
     }
 
-    const [, score, label] = match;
-    bandTally[category][label] = (bandTally[category][label] ?? 0) + 1;
-
-    const code = resultText?.match(/^\s*(\d{6})/)?.[1];
+    const code = await items.first().getAttribute("data-code");
     expect(code, `§V3: displayed code must be a valid 6-digit NAICS code`).toMatch(/^\d{6}$/);
-    expect(Number(score)).toBeGreaterThanOrEqual(0);
-    expect(Number(score)).toBeLessThanOrEqual(1);
 
-    // §V2: medium/low band always offers Q&A. (high band's offer depends on
-    // top-2 margin, not observable from the DOM alone, so it's not asserted.)
-    if (label !== "high") {
-      await expect(page.locator("#naics-qa")).toBeVisible();
+    const confText = (await items.first().textContent()) ?? "";
+    const match = confText.match(/(🟢|🟡|🔴)\s*(\d\.\d\d)/);
+    if (match) {
+      const [, emoji, score] = match;
+      const label = emoji === "🟢" ? "high" : emoji === "🟡" ? "medium" : "low";
+      bandTally[category][label] = (bandTally[category][label] ?? 0) + 1;
+      expect(Number(score)).toBeGreaterThanOrEqual(0);
+      expect(Number(score)).toBeLessThanOrEqual(1);
     }
   });
 }
@@ -54,73 +52,35 @@ test.afterAll(() => {
   console.log("confidence band distribution:", JSON.stringify(bandTally, null, 2));
 });
 
-// §V9/§C: Q&A must offer the model's own top-N candidates via a decision tree built from
-// where their hierarchy paths diverge, not the full hierarchy — "hvac" is a known 2-way
-// ambiguity (238220 vs 423730) that splits immediately at the sector level.
-test("Q&A offers model candidates via decision tree, not the full hierarchy root", async ({
-  page,
-}) => {
-  await page.goto("/?details=tree");
-  await page.fill("#naics-input", "hvac");
-  await page.click("#naics-submit");
-  await expect(page.locator("#naics-qa")).toBeVisible();
-
-  const groupButtons = page.locator("#naics-qa button[data-group]");
-  const groups = await groupButtons.evaluateAll((els) =>
-    els.map((el) => el.getAttribute("data-group")),
-  );
-  expect(groups, "candidates diverge at the sector level").toEqual(
-    expect.arrayContaining(["23", "42"]),
-  );
-  expect(groups.length, "branch choices, not the ~20 hierarchy sectors").toBeLessThan(10);
-  await expect(page.locator("#naics-qa-browse")).toBeVisible();
-
-  // pick the Wholesale Trade branch -> down to its single remaining candidate
-  await page.locator('#naics-qa button[data-group="42"]').click();
-  await page.locator('#naics-qa button[data-code="423730"]').click();
-  const resultText = await page.locator("#naics-result").textContent();
-  expect(resultText).toContain("423730");
-  await expect(page.locator("#naics-qa")).toBeHidden();
-});
-
-test("Q&A 'browse full hierarchy' falls back to root sectors", async ({ page }) => {
-  await page.goto("/?details=tree");
-  await page.fill("#naics-input", "hvac");
-  await page.click("#naics-submit");
-  await page.click("#naics-qa-browse");
-  const optionCount = await page.locator("#naics-qa button[data-code]").count();
-  expect(optionCount).toBeGreaterThan(10); // full hierarchy root, not the 2 candidates
-});
-
-// §V10: definition + illustrative examples shown when present (result panel and
-// Q&A candidate picks), and absence never crashes the UI.
-test("result panel shows definition + illustrative examples when present", async ({ page }) => {
-  const errors: string[] = [];
-  page.on("pageerror", (e) => errors.push(String(e)));
-
+// §V5/§V14: results always render as a full ranked list, ∀ confidence tier — no
+// confidence-gated hero/list split, even for an unambiguous high-confidence match.
+test("results list shows all top candidates regardless of confidence", async ({ page }) => {
   await page.goto("/");
   await page.fill("#naics-input", "home health care");
   await page.click("#naics-submit");
-  await expect(page.locator("#naics-result .code")).toHaveText("621610");
-  await expect(page.locator("#naics-result .definition")).toContainText(
-    "skilled nursing services in the home",
-  );
-  await expect(page.locator("#naics-result .examples li")).toHaveCount(4);
-  await expect(page.locator("#naics-result .examples")).toContainText(
-    "Visiting nurse associations",
-  );
-  expect(errors).toEqual([]);
+  const items = page.locator("#naics-result [data-code]");
+  await expect(items.first()).toBeVisible();
+  expect(await items.count()).toBeGreaterThan(1);
+  await expect(items.first()).toHaveAttribute("data-code", "621610");
 });
 
-test("Q&A candidate picks show a definition snippet to help choose", async ({ page }) => {
-  await page.goto("/?details=tree");
-  await page.fill("#naics-input", "hvac");
+test("result item shows definition + illustrative examples when 'Show definitions' is on", async ({
+  page,
+}) => {
+  const errors: string[] = [];
+  page.on("pageerror", (e) => errors.push(String(e)));
+
+  await page.goto("/?showDef=1");
+  await page.fill("#naics-input", "home health care");
   await page.click("#naics-submit");
-  await expect(page.locator("#naics-qa")).toBeVisible();
-  // "hvac" candidates diverge at the sector level -> drill one branch down to the candidate list
-  await page.locator('#naics-qa button[data-group="42"]').click();
-  const defCount = await page.locator("#naics-qa button .definition").count();
-  expect(defCount).toBeGreaterThan(0);
+
+  const first = page.locator('#naics-result [data-code="621610"]');
+  await expect(first.locator('[data-slot="item-description"]')).toContainText(
+    "skilled nursing services in the home",
+  );
+  await expect(first.locator("li")).toHaveCount(4);
+  await expect(first.locator("ul")).toContainText("Visiting nurse associations");
+  expect(errors).toEqual([]);
 });
 
 test("'How does it work?' link points to the README section on GitHub", async ({ page }) => {
@@ -133,39 +93,33 @@ test("'How does it work?' link points to the README section on GitHub", async ({
   await expect(link).toHaveAttribute("target", "_blank");
 });
 
-// §V28: fast (mocked, <2s) load never flashes the "Loading…" text.
-test("loading text stays hidden on a fast load", async ({ page }) => {
+// §V8: fast (mocked, <2s) load never flashes a loading skeleton.
+test("skeleton stays hidden on a fast load", async ({ page }) => {
   await page.goto("/");
-  await expect(page.locator("#naics-loading")).toBeHidden();
+  await expect(page.locator("#naics-skeleton")).toBeHidden();
   await expect(page.locator("#naics-input")).toBeEnabled(); // model ready
-  await expect(page.locator("#naics-loading")).toBeHidden();
+  await expect(page.locator("#naics-skeleton")).toBeHidden();
 });
 
-// §V28: a load past the 2s delay still shows feedback, ⊥ a silent multi-second wait.
-test("loading indicator shown once a slow load passes the 2s delay", async ({ page }) => {
+// §V8: a load past the 2s delay still shows feedback, ⊥ a silent multi-second wait.
+test("skeleton shown once a slow load passes the 2s delay", async ({ page }) => {
   await mockNaicsDataSlow(page, 2500);
   await page.goto("/");
-  await expect(page.locator("#naics-loading")).toBeHidden();
-  await expect(page.locator("#naics-loading")).toBeVisible();
-  await expect(page.locator("#naics-loading")).toBeHidden(); // model load completes
+  await page.fill("#naics-input", "hvac");
+  await page.click("#naics-submit");
+  await expect(page.locator("#naics-skeleton")).toBeVisible();
+  await expect(page.locator("#naics-skeleton")).toBeHidden(); // model load + predict completes
+  await expect(page.locator("#naics-result [data-code]").first()).toBeVisible();
 });
 
-// §V29: result panel + Q&A candidates link out to census.gov for the code shown, new tab.
-test("result panel and Q&A candidates link to census.gov, opened in a new tab", async ({
-  page,
-}) => {
-  await page.goto("/?details=tree");
+// §V29: every result item links out to census.gov for its code, new tab.
+test("result items link to census.gov, opened in a new tab", async ({ page }) => {
+  await page.goto("/");
   await page.fill("#naics-input", "hvac");
   await page.click("#naics-submit");
 
-  const resultLink = page.locator("#naics-result .census-link");
-  await expect(resultLink).toHaveAttribute("href", /census\.gov\/naics\/\?input=\d{6}/);
-  await expect(resultLink).toHaveAttribute("target", "_blank");
-  await expect(resultLink).toHaveText(/\d{6}/); // link text includes the naics code
-
-  await page.locator('#naics-qa button[data-group="42"]').click();
-  const candidateLink = page.locator("#naics-qa .census-link").first();
-  await expect(candidateLink).toHaveAttribute("href", /census\.gov\/naics\/\?input=\d{6}/);
-  await expect(candidateLink).toHaveAttribute("target", "_blank");
-  await expect(candidateLink).toHaveText(/\d{6}/);
+  const link = page.locator("#naics-result .census-link").first();
+  await expect(link).toHaveAttribute("href", /census\.gov\/naics\/\?input=\d{6}/);
+  await expect(link).toHaveAttribute("target", "_blank");
+  await expect(link).toHaveText(/\d{6}/); // link text includes the naics code
 });

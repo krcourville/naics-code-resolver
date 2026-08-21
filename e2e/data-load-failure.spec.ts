@@ -9,5 +9,5 @@ base("shows an error state when both data hosts fail", async ({ page }) => {
   await mockNaicsDataFailure(page);
   await page.goto("/");
   await expect(page.locator("#naics-error")).toBeVisible();
-  await expect(page.locator("#naics-loading")).toBeHidden();
+  await expect(page.locator("#naics-skeleton")).toBeHidden();
 });

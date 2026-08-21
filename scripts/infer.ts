@@ -9,9 +9,9 @@ if (!text) {
 
 const { model, titles } = await loadNaics();
 const top = model.predictTopN(text, 10);
-const { label, offerQA } = classifyConfidence(top[0]?.score ?? 0, top[1]?.score);
+const { label } = classifyConfidence(top[0]?.score ?? 0);
 
-console.log(`confidence: ${label} (offer Q&A: ${offerQA})`);
+console.log(`confidence: ${label}`);
 for (const { naics, score } of top) {
   console.log(`${naics}\t${score.toFixed(6)}\t${titles.get(naics) ?? "(unknown)"}`);
 }

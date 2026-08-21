@@ -102,19 +102,22 @@ h1 {
 
 #site-header {
   display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 12px;
-  margin-bottom: 40px;
-}
-
-#header-links {
-  display: flex;
   align-items: center;
-  gap: 20px;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 32px;
 }
 
-#site-header a {
+#site-footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  margin-top: 40px;
+}
+
+#site-footer a {
   display: flex;
   align-items: center;
   gap: 6px;
@@ -138,32 +141,6 @@ p {
   margin: 0;
 }
 
-#settings-panel {
-  align-self: flex-start;
-  font-size: 14px;
-
-  summary {
-    cursor: pointer;
-    color: var(--text);
-    &:hover {
-      color: var(--text-h);
-    }
-  }
-
-  .settings-fields {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 8px;
-    margin-top: 8px;
-    padding: 12px;
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    background: var(--bg);
-    box-shadow: var(--shadow);
-  }
-}
-
 code {
   font-family: var(--mono);
   font-size: 15px;
@@ -175,29 +152,22 @@ code {
 }
 
 #app {
-  width: 640px;
+  width: 48rem;
   max-width: 100%;
   margin: 0 auto;
   min-height: 100svh;
   box-sizing: border-box;
-  padding: 64px 20px;
+  padding: 48px 16px;
+
+  @media (min-width: 640px) {
+    padding: 64px 24px;
+  }
 }
 
 #resolver {
   display: flex;
   flex-direction: column;
   gap: 20px;
-  padding: 32px;
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  background: var(--bg);
-  box-shadow: var(--shadow);
-}
-
-#how-it-works-link {
-  align-self: flex-start;
-  font-size: 15px;
-  margin-top: -12px;
 }
 
 #naics-form {
@@ -206,179 +176,17 @@ code {
   gap: 8px;
 }
 
-#naics-form-actions {
-  display: flex;
-  gap: 8px;
-}
-
 #naics-result {
   text-align: left;
-
-  .code {
-    font-family: var(--mono);
-    font-size: 24px;
-    color: var(--text-h);
-  }
-
-  .title {
-    margin-top: 4px;
-  }
-
-  .confidence {
-    margin-top: 8px;
-    font-size: 15px;
-    color: var(--text);
-  }
-
-  .definition {
-    margin-top: 12px;
-    font-size: 15px;
-  }
-
-  .examples {
-    margin: 8px 0 0;
-    padding-left: 20px;
-    font-size: 15px;
-    color: var(--text);
-  }
 }
 
-#naics-qa {
+#naics-empty {
   text-align: left;
-  margin-top: 24px;
-  padding: 16px;
-  border-radius: 6px;
-  border: 1px solid var(--border);
-  background: var(--code-bg);
-
-  .qa-heading {
-    margin: 0;
-    font-family: var(--heading);
-    font-size: 18px;
-    font-weight: 600;
-    color: var(--text-h);
-  }
-
-  ul {
-    list-style: none;
-    padding: 0;
-    margin: 8px 0 0;
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-  }
-
-  button:not([data-slot="checkbox"]) {
-    width: 100%;
-    text-align: left;
-    font: inherit;
-    padding: 8px 12px;
-    border-radius: 6px;
-    border: 1px solid var(--border);
-    color: var(--text-h);
-    background: var(--bg);
-    cursor: pointer;
-    transition: box-shadow 0.3s;
-
-    .definition {
-      margin-top: 4px;
-      font-size: 14px;
-      font-weight: normal;
-      color: var(--text);
-    }
-
-    .qa-cand-head {
-      display: flex;
-      align-items: baseline;
-      flex-wrap: wrap;
-      gap: 8px;
-    }
-
-    .qa-cand-code {
-      font-family: var(--mono);
-      font-size: 14px;
-      color: var(--text);
-    }
-
-    .qa-cand-title {
-      flex: 1;
-      min-width: 140px;
-    }
-
-    .qa-cand-conf {
-      font-size: 13px;
-      font-weight: normal;
-      color: var(--text);
-      white-space: nowrap;
-    }
-
-    &:hover {
-      box-shadow: var(--shadow);
-    }
-    &:focus-visible {
-      outline: 2px solid var(--brand);
-      outline-offset: 2px;
-    }
-  }
-
-  .qa-breadcrumb {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 4px;
-    font-size: 14px;
-    color: var(--text);
-  }
-
-  .qa-breadcrumb button.crumb,
-  #naics-qa-up {
-    width: auto;
-    display: inline;
-    padding: 2px 4px;
-    border: none;
-    font-size: 14px;
-    color: var(--brand);
-    background: none;
-
-    &:hover {
-      box-shadow: none;
-      filter: brightness(0.85);
-    }
-  }
-
-  #naics-qa-up {
-    margin-top: 8px;
-  }
-
-  .qa-list-row {
-    .qa-list-line1 {
-      display: flex;
-      align-items: baseline;
-      flex-wrap: wrap;
-      gap: 8px;
-    }
-
-    .qa-cand-title {
-      color: var(--text);
-    }
-
-    .definition {
-      margin: 6px 0 0;
-      font-size: 14px;
-      font-weight: normal;
-      color: var(--text);
-    }
-  }
+  color: var(--text);
 }
 
-.qa-list-showdef {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin: 8px 0 4px;
-  font-size: 14px;
-  color: var(--text);
-  cursor: pointer;
+.census-link {
+  font-size: 13px;
 }
 
 @theme inline {

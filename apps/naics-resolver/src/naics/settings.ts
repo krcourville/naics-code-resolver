@@ -1,12 +1,9 @@
-export type DetailsMode = "tree" | "list";
-
 export interface Settings {
-  details: DetailsMode;
   showDef: boolean;
   floor: number;
 }
 
-export const DEFAULT_SETTINGS: Settings = { details: "list", showDef: false, floor: 0 };
+export const DEFAULT_SETTINGS: Settings = { showDef: false, floor: 0 };
 
 const STORAGE_KEY = "naics-settings";
 
@@ -29,8 +26,6 @@ export function parseStoredJson(raw: string | null): Partial<Settings> {
 
 export function parseQueryParams(params: URLSearchParams): Partial<Settings> {
   const out: Partial<Settings> = {};
-  const details = params.get("details");
-  if (details === "tree" || details === "list") out.details = details;
   const showDef = params.get("showDef");
   if (showDef === "0" || showDef === "1") out.showDef = showDef === "1";
   const floorRaw = params.get("floor");
@@ -43,7 +38,6 @@ export function parseQueryParams(params: URLSearchParams): Partial<Settings> {
 
 function pickSettings(p: Record<string, unknown>): Partial<Settings> {
   const out: Partial<Settings> = {};
-  if (p.details === "tree" || p.details === "list") out.details = p.details;
   if (typeof p.showDef === "boolean") out.showDef = p.showDef;
   if (typeof p.floor === "number" && !Number.isNaN(p.floor)) out.floor = clampFloor(p.floor);
   return out;
@@ -69,7 +63,6 @@ export function loadSettings(params: URLSearchParams): Settings {
 export function saveSettings(settings: Settings): void {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
   const params = new URLSearchParams(location.search);
-  params.set("details", settings.details);
   params.set("showDef", settings.showDef ? "1" : "0");
   params.set("floor", String(settings.floor));
   history.replaceState(null, "", `${location.pathname}?${params}`);
