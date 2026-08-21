@@ -1,3 +1,4 @@
+// @vitest-environment jsdom
 import type { NaicsData } from "@cajuncodemonkey/naics-search";
 import { renderHook, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vite-plus/test";

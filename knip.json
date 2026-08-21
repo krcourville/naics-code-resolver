@@ -1,5 +1,6 @@
 {
   "$schema": "https://unpkg.com/knip@6/schema.json",
+  "ignoreDependencies": ["@arethetypeswrong/core", "publint"],
   "workspaces": {
     ".": {
       "project": ["scripts/**/*.ts", "e2e/**/*.ts"]
@@ -8,8 +9,12 @@
       "project": ["src/**/*.{ts,tsx}"]
     },
     "packages/naics-search": {
-      "entry": ["src/index.ts"],
+      "entry": ["src/index.ts", "src/naics/fs-provider.ts"],
       "project": ["src/**/*.ts"]
+    },
+    "packages/naics-search-react": {
+      "entry": ["src/index.ts"],
+      "project": ["src/**/*.{ts,tsx}"]
     }
   }
 }

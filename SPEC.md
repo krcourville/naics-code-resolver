@@ -277,7 +277,7 @@ T92|x|write `packages/naics-search-react/README.md`: API docs, usage example, li
 T93|x|add `.github/workflows/publish-naics-search-react.yml` — tag-triggered (`naics-search-react-v*`) build+publish to npm, mirrors `publish-naics-search.yml`|T91
 T94|.|refactor `apps/naics-resolver` to consume `useNaicsSearch()` — replaces T67's manual load-effect|V58,T90
 T95|x|scaffold `packages/naics-search-data` workspace pkg (data files only, copied from `packages/naics-search/src/data/*.json` @ publish time), add to `pnpm-workspace.yaml`|V64,T82
-T96|.|extend knip/publint/attw config: cover `packages/naics-search-react/src/**` (V62), exclude `packages/naics-search-data` (V65)|V62,V65
+T96|x|extend knip/publint/attw config: cover `packages/naics-search-react/src/**` (V62), exclude `packages/naics-search-data` (V65)|V62,V65
 
 ## §B BUGS
 
